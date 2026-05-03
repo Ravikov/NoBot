@@ -1,5 +1,7 @@
 # NoBot
 
+📖 English | [简体中文](./README.zh-CN.md)
+
 **This README was translated by DeepSeek,the original document is in Chinese,so if there are any inaccuracies, please refer to the original Chinese version (`README.zh-CN.md`).**
 
 ## A Lightweight Simple AI Chatbot
