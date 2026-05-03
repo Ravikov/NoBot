@@ -50,7 +50,7 @@ def get_re(key,url,model,messages,tem=0,max_tokens=2048,search=False):
     if response.status_code == 200:
         # 将结果写入json文件
         orgin_result = response.json()
-        with open('response.json','w',encoding = 'UTF-8') as f:
+        with open('debug/response.json','w',encoding = 'UTF-8') as f:
             json.dump(orgin_result, f, ensure_ascii=False, indent=2)
         # 输出status和延迟信息
         state = response.status_code
@@ -66,7 +66,7 @@ def get_re(key,url,model,messages,tem=0,max_tokens=2048,search=False):
             tokens = json.load(f)
         all_tokens = tokens.get("all_tokens") + total_tokens
         tokens["all_tokens"] = all_tokens
-        with open("states.json",'w',encoding='UTF-8') as f:
+        with open("debug/states.json",'w',encoding='UTF-8') as f:
             json.dump(tokens,f,ensure_ascii=False,indent=2)
         
         log('调用结束...')

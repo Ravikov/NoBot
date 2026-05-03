@@ -200,7 +200,9 @@ def wechat_claw():
         if not token:
             log('没有已存储的token信息,扫码登录...')
             fst_log_in()
-            log('登录完毕')
+            log('登录完毕,等待服务器同步session(3秒)...')
+            time.sleep(3)
+            log('验证token...')
         re = requests.post(
             url=f'{BASE_URL}/ilink/bot/getupdates',
             headers=set_headers_with_token(token),
