@@ -40,7 +40,13 @@ def test(api,url=None,key=None,model=None):
 def run_bot():
     if __name__ == '__main__':
         log('程序启动')
-        print('请选择启动方式：\n0-测试模型联通(一般会消耗 10 tokens左右)\n1-webhook启动\n2-命令行启动\n3-微信启动(不可用)\n')
+        print("""请选择启动方式：\n
+              0-测试模型联通(一般会消耗 10 tokens左右)\n
+              1-webhook启动\n
+              2-命令行启动\n
+              3-微信启动(不可用)\n
+              4-微信clawbot启动\n
+        """)
         try:
             start_way = input()
         except KeyboardInterrupt:
