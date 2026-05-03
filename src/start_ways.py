@@ -149,7 +149,7 @@ def wechat_claw():
 
     # 无token启动
     def fst_log_in():
-        global wechat_clawbot_config
+        nonlocal wechat_clawbot_config
         get_qr_th = threading.Thread(target=get_qr)
         get_qr_th.start()
         qr = qr_queue.get()
@@ -178,7 +178,7 @@ def wechat_claw():
 
         # 存储信息方便复用
         def save_conect_mes(connection):
-            global BASE_URL
+            nonlocal BASE_URL
             wechat_clawbot = load_config()
             wechat_clawbot['baseurl'] = connection.get('baseurl')
             wechat_clawbot['token'] = connection.get('bot_token')
@@ -214,7 +214,15 @@ def wechat_claw():
             }
             )
         log(re.text)
-        if re.status_code == 200:
+        try:
+            a = re.json()['errcode']
+            if a == -14:
+                log('会话过期error,请稍等一段时间再次运行(ilinkAPI的错误,目前原因未知),程序进入3600秒sleep,您也可以选择退出')
+                time.sleep(3600)
+            s = False
+        except KeyError:
+            s = True
+        if re.status_code == 200 and s:
             log('已存储的token可用!')
         else:
             log(f'已存储的token不可用({re.status_code}),扫码登录...\n如果多次出现该日志,请检查是否有其他错误或问题')

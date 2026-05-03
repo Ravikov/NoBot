@@ -47,7 +47,7 @@ def run_bot():
               3-微信启动(不可用)
               4-微信clawbot启动
         """)
-        print('在下方输入选择编号,程序运行途中,您可以随时按 CTRL+C 退出,包括现在')
+        print('在下方输入选择编号并回车,程序运行途中,您可以随时按 CTRL+C 退出,包括现在')
         try:
             start_way = input()
         except KeyboardInterrupt:

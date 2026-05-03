@@ -62,7 +62,7 @@ def get_re(key,url,model,messages,tem=0,max_tokens=2048,search=False):
         cache_hit_tokens = orgin_result.get("usage")
         cache_hit_tokens = cache_hit_tokens.get("prompt_cache_hit_tokens",'None')
 
-        with open("states.json",'r',encoding='UTF-8') as f:
+        with open("debug/states.json",'r',encoding='UTF-8') as f:
             tokens = json.load(f)
         all_tokens = tokens.get("all_tokens") + total_tokens
         tokens["all_tokens"] = all_tokens
