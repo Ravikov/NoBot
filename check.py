@@ -59,13 +59,18 @@ def check():
     }
 
     # 检查目录完整性
-    log('检查config目录是否存在...')
-    filedir = Path('config')
-    if not filedir.exists():
-        log('创建config目录...')
-        filedir.mkdir(parents=True)
-    else:
-        log('config存在,下一步...')
+    filedirs = [
+        'config',
+        'memory'
+    ]
+    for d in filedirs:
+        log(f'检查{d}目录是否存在...')
+        filedir = Path(d)
+        if not filedir.exists():
+            log(f'创建{d}目录...')
+            filedir.mkdir(parents=True)
+        else:
+            log(f'{d}存在')
     # 检查文件完整性
     files = [
         'config/config.json',

@@ -40,17 +40,19 @@ def test(api,url=None,key=None,model=None):
 def run_bot():
     if __name__ == '__main__':
         log('程序启动')
-        print("""请选择启动方式：\n
-              0-测试模型联通(一般会消耗 10 tokens左右)\n
-              1-webhook启动\n
-              2-命令行启动\n
-              3-微信启动(不可用)\n
-              4-微信clawbot启动\n
+        print("""请选择启动方式:
+              0-测试模型联通(一般会消耗 10 tokens左右)
+              1-webhook启动
+              2-命令行启动
+              3-微信启动(不可用)
+              4-微信clawbot启动
         """)
+        print('在下方输入选择编号,程序运行途中,您可以随时按 CTRL+C 退出,包括现在')
         try:
             start_way = input()
         except KeyboardInterrupt:
             log('选择中断')
+            return 0
         
         match start_way:
             case '0':
@@ -99,15 +101,15 @@ def run_bot():
                 work.start()
             case '4':
                 log('Wechat Claw Bot启动...')
-                wechat_claw()
+                we_claw = threading.Thread(target=wechat_claw,daemon=True)
+                we_claw.start()
 
             case _:
                 log('输入有误')
 
         try:
-            print('按 Ctrl+C 可以退出')
             while True:
-                time.sleep(1)
+                time.sleep(2)
         except KeyboardInterrupt:
             log('收到终止指令...')
             log("程序优雅退出~")
