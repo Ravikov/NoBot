@@ -202,6 +202,9 @@ def wechat_claw():
             fst_log_in()
             log('登录完毕,等待服务器同步session(3秒)...')
             time.sleep(3)
+            log('重载token...')
+            bot_mes = load_config()
+            token = bot_mes['token']
             log('验证token...')
         re = requests.post(
             url=f'{BASE_URL}/ilink/bot/getupdates',
