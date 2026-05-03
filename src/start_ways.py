@@ -194,17 +194,18 @@ def wechat_claw():
 
     # 核查token可用状态/存在状态
     def token_check():
+        nonlocal wechat_clawbot_config
         log('检查token可用性...')
-        bot_mes = load_config()
-        token = bot_mes['token']
+        wechat_clawbot_config = load_config()
+        token = wechat_clawbot_config['token']
         if not token:
             log('没有已存储的token信息,扫码登录...')
             fst_log_in()
             log('登录完毕,等待服务器同步session(3秒)...')
             time.sleep(3)
             log('重载token...')
-            bot_mes = load_config()
-            token = bot_mes['token']
+            wechat_clawbot_config = load_config()
+            token = wechat_clawbot_config['token']
             log('验证token...')
         re = requests.post(
             url=f'{BASE_URL}/ilink/bot/getupdates',
@@ -282,45 +283,88 @@ def wechat_claw():
             return None
 
     def send_mes(result,to_user,context_token):
-        # log(context_token)
-        data = {
-            "msg": {
-                "from_user_id": '',
-                "to_user_id": to_user,
-                "context_token": context_token,
-                "message_type": 2,
-                "message_state": 2,
-                "client_id": str(uuid.uuid4()),
-                "item_list": [
-                {
-                    "type": 1,
-                    "text_item": {"text": result}
+        # 对方正在输入的提示
+        def get_ticket():
+            log('获取ticket...')
+            get_config = requests.post(
+                url=f'{BASE_URL}/ilink/bot/getconfig',
+                headers=set_headers_with_token(wechat_clawbot_config['token']),
+                json={
+                    'ilink_user_id': wechat_clawbot_config['userid'],
+                    'context_token': context_token
                 }
-                ],
-                'base_info': { 
-                    "channel_version": "2.0.0"
+            )
+            if get_config.status_code == 200:
+                ticket = get_config.json()['typing_ticket']
+                return ticket
+            else:
+                pass
+        def send_type(ticket):
+            log('申请打字状态...')
+            send_typing = requests.post(
+                url=f'{BASE_URL}/ilink/bot/sendtyping',
+                headers=set_headers_with_token(wechat_clawbot_config['token']),
+                json={
+                    'ilink_user_id': wechat_clawbot_config['userid'],
+                    'typing_ticket': ticket,
+                    'status': 1
+                }
+            )
+            if send_typing.status_code == 200:
+                log('打字状态申请成功')
+
+        ticket = get_ticket()
+
+        # log(context_token)
+        n = 0
+        for msg in result:
+            threading.Thread(target=send_type,args=(ticket,)).start()
+            time.sleep(0.5)
+            if n == 0:
+                text_token = context_token
+            else:
+                text_token = ''
+            data = {
+                "msg": {
+                    "from_user_id": '',
+                    "to_user_id": to_user,
+                    "context_token": text_token,
+                    "message_type": 2,
+                    "message_state": 2,
+                    "client_id": str(uuid.uuid4()),
+                    "item_list": [
+                    {
+                        "type": 1,
+                        "text_item": {"text": msg}
+                    }
+                    ],
+                    'base_info': { 
+                        "channel_version": "2.0.0"
+                    }
                 }
             }
-        }
-        # log(f"完整请求: {json.dumps(data, ensure_ascii=False)}") 
-        log('发送消息...')
-        token = wechat_clawbot_config['token']
-        re = requests.post(
-            f'{BASE_URL}/ilink/bot/sendmessage',
-            headers=set_headers_with_token(token),
-            json=data
-        )
-        log(re.text)
-        if re.status_code == 200 and re.json() == {}:
-            log('发送成功')
-        else:
-            ret = re.json()['ret']
-            log(f'发送失败,状态码: {re.status_code} , 返回码: {ret}')
+            # log(f"完整请求: {json.dumps(data, ensure_ascii=False)}") 
+            log(f'发送消息: {msg}')
+            token = wechat_clawbot_config['token']
+            re = requests.post(
+                f'{BASE_URL}/ilink/bot/sendmessage',
+                headers=set_headers_with_token(token),
+                json=data
+            )
+            time.sleep(2)
+            log(re.text)
+            if re.status_code == 200 and re.json() == {}:
+                log('本条消息发送成功')
+            else:
+                ret = re.json()['ret']
+                log(f'发送失败,状态码: {re.status_code} , 返回码: {ret}')
+                return 1
+        log('所有消息发送完毕')
 
     # 调用函数
     def re_and_send(mes,mes_type,to_user,context_token):
         if mes_type == 1:
-            log('调用模型...')
+            log('调用reply函数...')
             result = get_llm_reply(mes)
             send_mes(result,to_user,context_token)
         else:
@@ -335,8 +379,7 @@ def wechat_claw():
                 if mes:
                     break
             log(f'消息监听get: {mes},类型: {mes_type}')
-            send = threading.Thread(target=re_and_send,args=(mes,mes_type,to_user,context_token))
-            send.run()
+            re_and_send(mes,mes_type,to_user,context_token)
 
     # 入口函数
     def start_wechat_clawbot():

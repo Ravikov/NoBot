@@ -1,25 +1,15 @@
-import json
 from src.touch_llm import sec_llm
-from src.common import config
+from src.common import config,load_history,save_history
 from debug.log import log
-
-def load_history():
-    with open('memory.json','r',encoding='UTF-8') as f:
-        history = json.load(f)
-    return history
-def save_history(history):
-    with open('memory.json','w',encoding='UTF-8') as f:
-        json.dump(history,f,ensure_ascii=False,indent=2)
-    return 0
 
 def set_memory():
     mem = load_history()
     memory = sec_llm(
         0,
-        mem['memory'],
-        [{'role': 'system','content': config['memory_prompt']}],
-        mem['history'],
-        [{'role': 'user','content': '将上文总结'}]
+        mem['memory']+
+        [{'role': 'system','content': config['memory_prompt']}]+
+        mem['history']+
+        [{'role': 'user','content': '将对话记录进行记忆性总结,要有类似记忆深度的因素在内'}]
     )
     if memory == 1:
         t = '记忆总结失败,请参考api错误码'
