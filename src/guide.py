@@ -15,7 +15,7 @@ from debug.log import log
 def set_llm(llm,project):
     print('请按要求输入配置内容,键入 N 表示此项保持不变')
     project_value = input(f'请设置{llm}的{project}: ')
-    if project_value not in ['N','n']:
+    if project_value not in ['N','n','']:
         with open('config/config.json','r',encoding='utf-8') as f:
             config = json.load(f)
         if llm == '主模型':
@@ -40,9 +40,13 @@ def set_mainllm(project):
         value = input(f'请设置主模型参数[{project}](默认20,当前{config["max_history_turns"]}): ')
         project = 'max_history_turns'
     elif project == '是否启用时间注入':
-        value = bool(input(f'请设置主模型参数[{project}](true或false,默认true,当前{config["or_time_feel"]}): '))
+        value = (input(f'请设置主模型参数[{project}](true或false,默认true,当前{config["or_time_feel"]}): '))
         project = 'or_time_feel'
     if value not in ['N','n','']:
+        if type(value) == str and value not in ['true','True','False','false']:
+            value = float(value)
+        else:
+            value = bool(value)
         config[project] = value
         with open('config/config.json','w',encoding='utf-8') as f:
             json.dump(config,f,ensure_ascii=False,indent=2)
