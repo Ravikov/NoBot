@@ -74,16 +74,20 @@ def get_re(key,url,model,messages,tem=0,max_tokens=2048,search=False):
 
     return result,state,ms,orgin_result
     
+def get_time():
+    if config['or_time_feel']:
+            now_time = [{"role":"user","content":f"当前时间:{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}"}]
+    else:
+        now_time = []
+    return now_time
+
 # 调用主api函数
 def fst_llm(question):
     # 读取记忆并拼接message
-    if config['or_time_feel']:
-        now_time = [{"role":"system","content":f"当前时间:{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}"}]
-    else:
-        now_time = []
     history = load_history()
-    messages = [{"role": "system", "content": role_prompt}]+history.get('history')+history.get('memory')+now_time+[{"role": "user", "content": question}]
-    result,state,ms,orgin_result = get_re(config['API']['key'],config['API']['url'],config['API']['name'],messages,1.3,4096)
+    messages = [{"role": "system", "content": role_prompt}]+history.get('history')+history.get('memory')+get_time()+[{"role": "user", "content": question}]
+    print(messages)
+    result,state,ms,orgin_result = get_re(config['API']['key'],config['API']['url'],config['API']['name'],messages,config['temperature'],config['max_tokens'])
     return result,state,ms,orgin_result
 
 # 辅助api调用函数
@@ -98,8 +102,8 @@ def sec_llm(tem,mes):
 # 联网搜索模型
 def search_api(mes):
     history = load_history()
-    messages = [{"role": "system", "content": role_prompt}]+history.get('history',[])+history.get('memory',[])+[{"role": "user", "content": mes}]
-    result,state,ms,orgin_result = get_re(config['searchAPI']['key'],config['searchAPI']['url'],config['searchAPI']['name'],messages,0.5,512,True)
+    messages = [{"role": "system", "content": role_prompt}]+history.get('history',[])+history.get('memory',[])+get_time()+[{"role": "user", "content": mes}]
+    result,state,ms,orgin_result = get_re(config['searchAPI']['key'],config['searchAPI']['url'],config['searchAPI']['name'],messages,config['temperature'],config['max_tokens'],True)
     log('联网搜索模型完成调用')
     
     return result,state,ms,orgin_result
