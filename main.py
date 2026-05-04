@@ -9,11 +9,13 @@ import time
 import threading
 import sys
 import io
+import shutil
 from src.common import config
 from debug.log import log
 from src.touch_llm import *
 from src.reply import reply
 from src.start_ways import *
+from src.guide import set_config
 
 # 设置编码
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
@@ -40,19 +42,26 @@ def test(api,url=None,key=None,model=None):
 def run_bot():
     if __name__ == '__main__':
         log('程序启动')
-        print("""请选择启动方式:
-              0-测试模型联通(一般会消耗 10 tokens左右)
-              1-webhook启动(未维护,不建议使用)
-              2-命令行启动
-              3-微信启动(不可用)
-              4-微信clawbot启动
-        """)
-        print('在下方输入选择编号并回车,程序运行途中,您可以随时按 CTRL+C 退出,包括现在')
-        try:
-            start_way = input()
-        except KeyboardInterrupt:
-            log('选择中断')
-            return 0
+        if config['non_setup']:
+            log('首次启动,编辑配置文件...')
+            start_way = 'set'
+        else:
+            print("""请选择启动方式:
+                save-备份配置文件
+                load-恢复上一次备份
+                set-设置配置文件
+                0-测试模型联通(一般会消耗 10 tokens左右)
+                1-webhook启动(未维护,不建议使用)
+                2-命令行启动
+                3-微信启动(不可用)
+                4-微信clawbot启动
+            """)
+            print('在下方输入选择编号并回车,程序运行途中,您可以随时按 CTRL+C 退出,包括现在')
+            try:
+                start_way = input()
+            except KeyboardInterrupt:
+                log('选择中断')
+                return 0
         
         match start_way:
             case '0':
@@ -97,12 +106,19 @@ def run_bot():
                 print(f'\n请求成功, 返回结果：\n\n{result}\n\n延迟{ms}s')
             case '3':
                 log('微信启动...')
-                work = threading.Thread(target=wechat_bot,daemon=True)
-                work.start()
+                threading.Thread(target=wechat_bot,daemon=True).start()
             case '4':
                 log('Wechat Claw Bot启动...')
-                we_claw = threading.Thread(target=wechat_claw,daemon=True)
-                we_claw.start()
+                threading.Thread(target=wechat_claw,daemon=True).start()
+
+            case 'set':
+                threading.Thread(target=set_config,daemon=True).start()
+            case 'save':
+                shutil.copy('config/config.json','config/config.json.bak')
+                log('备份配置文件成功!')
+            case 'load':
+                shutil.copy('config/config.json.bak','config/config.json')
+                log('加载配置文件成功!')
 
             case _:
                 log('输入有误')

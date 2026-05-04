@@ -1,14 +1,21 @@
 import json
-import time
 
-# 日志
-def log(msg, level="INFO"):
-    timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-    log_line = f"[{timestamp}] [{level}] {msg}"
-    with open("debug/bot.log", "a", encoding="utf-8") as f:
-        f.write(log_line + "\n")
-        f.flush()
-    print(log_line, flush=True)
+# 设置项列举
+llm_list = [
+    '主模型',
+    '辅助模型',
+    '联网模型'
+]
+project_list = [
+    'url',
+    'key',
+    'name'
+]
+mainllm_settings = [
+    'temperature',
+    '最大上下文轮数',
+    '是否启用时间注入'
+]
 
 # 配置（只读一次）
 with open("config/config.json", "r", encoding="utf-8") as f:

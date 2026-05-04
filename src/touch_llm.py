@@ -1,5 +1,6 @@
 import requests
 import json
+import time
 from src.common import load_history,config
 from debug.log import log
 
@@ -76,8 +77,12 @@ def get_re(key,url,model,messages,tem=0,max_tokens=2048,search=False):
 # 调用主api函数
 def fst_llm(question):
     # 读取记忆并拼接message
+    if config['or_time_feel']:
+        now_time = [{"role":"system","content":f"当前时间:{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}"}]
+    else:
+        now_time = []
     history = load_history()
-    messages = [{"role": "system", "content": role_prompt}]+history.get('history')+history.get('memory')+[{"role": "user", "content": question}]
+    messages = [{"role": "system", "content": role_prompt}]+history.get('history')+history.get('memory')+now_time+[{"role": "user", "content": question}]
     result,state,ms,orgin_result = get_re(config['API']['key'],config['API']['url'],config['API']['name'],messages,1.3,4096)
     return result,state,ms,orgin_result
 

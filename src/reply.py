@@ -29,7 +29,7 @@ def reply(mes):
                     return {'reply': re}
             case _:
                 log('未知指令,本次输入略过')
-                return '未知的指令',0
+                return ['未知的指令'],0
     else:
         log('调用辅助模型判断联网功能...')
         or_search = sec_llm(

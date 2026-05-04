@@ -222,3 +222,4 @@ __marimo__/
 /debug/response.json
 /debug/states.json
 /memory/memory.json
+test.py

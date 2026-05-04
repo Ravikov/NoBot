@@ -22,16 +22,18 @@ def check():
             "name": "qwen3.6-flash"
         },
         "max_tokens": 2048,
-        "temperature": 1.3,
+        "temperature": 1.2,
         "prompt_file":"role_prompt",
-        "max_history_turns": 12,
+        "max_history_turns": 20,
         "memory_prompt": "请将用户提供的对话消息记录和旧的记忆总结成新的记忆,根据不同信息的权重可以有适当的删减,但主要事件不应该改动",
         "or_search_prompt": [
             {"role": "user","content": "请根据提示词判断回答该内容是否需要联网搜索 如果需要 请回复1 如果不需要 请回复0 你的回答必须遵守:只能出现0或1 不能有其他任何字符"}
         ],
         "txt_wash": [
             "*"
-        ]
+        ],
+        "or_time_feel": True,
+        "non_setup": True
     }
 
     DEFAULT_WECHATCLAW = {
@@ -74,6 +76,7 @@ def check():
     # 检查文件完整性
     files = [
         'config/config.json',
+        'config/config.json.bak',
         'config/wechat_clawbot.json',
         'config/role_prompt.txt',
         'debug/bot.log',
