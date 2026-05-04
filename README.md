@@ -78,4 +78,4 @@ Currently only two quick commands are supported. You can use them either in the 
 
 ## Closing Words
 
-This is the work of a 15-year-old, created through trial and error. It is also my first real project. I learned as I built — whenever I got stuck, I went and learned what I needed. So if some parts aren't well done, I kindly ask you to be understanding. If it's not useful for you, feel free to ignore it. But I would truly appreciate it if someone could offer me some guidance. Thank you!
+This is my first real project (and also a learning project). I learned as I built — whenever I got stuck, I went and learned what I needed. So if some parts aren't well done, I kindly ask you to be understanding. If this project isn't useful for you, feel free to ignore it. But I would truly appreciate it if someone could offer me some guidance. Thank you!
