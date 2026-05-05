@@ -31,5 +31,5 @@ def set_memory():
         save_history(mem)
         t = '总结记忆完毕'
         log(t)
-        t = ['总结记忆完毕',]
+        t = [t,]
         return t,0
