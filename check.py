@@ -31,7 +31,7 @@ def check():
             {"role": "user","content": "请根据提示词判断回答该内容是否需要联网搜索 如果需要 请回复1 如果不需要 请回复0 你的回答必须遵守:只能出现0或1 不能有其他任何字符"}
         ],
         "txt_wash": [
-            "*"
+            "*","\\n","。"
         ],
         "or_time_feel": True,
         "non_setup": True

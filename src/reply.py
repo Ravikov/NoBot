@@ -57,6 +57,8 @@ def reply(mes):
             for i in result:
                 if i in config['txt_wash']:
                     pass
+                elif i == '，':
+                    text = text+' '
                 else:
                     text = text+i
             result = text
