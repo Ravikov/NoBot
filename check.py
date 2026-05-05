@@ -60,7 +60,7 @@ def check():
         "memory": [
             {
             "role": "system",
-            "content": ""
+            "content": "[过往记忆]"
             }
         ],
         "turns": 0
