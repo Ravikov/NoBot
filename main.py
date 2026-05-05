@@ -10,6 +10,7 @@ import threading
 import sys
 import io
 import shutil
+import os
 from src.common import *
 from debug.log import log
 from src.touch_llm import *
@@ -46,7 +47,8 @@ def run_bot():
             log('首次启动,编辑配置文件...')
             start_way = 'set'
         else:
-            print("""请选择启动方式:
+            print("""启动引导:
+                del-清理日志文件
                 save-备份配置文件
                 load-恢复上一次备份
                 set-设置配置文件
@@ -114,11 +116,17 @@ def run_bot():
             case 'set':
                 threading.Thread(target=set_config,daemon=True).start()
             case 'save':
-                shutil.copy(CONFIG_FILE+'\config.json',CONFIG_FILE+'\config.json.bak')
+                shutil.copy(CONFIG_FILE,CONFIGBAK_FILE)
                 log('备份配置文件成功!')
             case 'load':
-                shutil.copy(CONFIG_FILE+'\config.json.bak',CONFIG_FILE+'\config.json')
+                shutil.copy(CONFIGBAK_FILE,CONFIG_FILE)
                 log('加载配置文件成功!')
+            case 'del':
+                if input('您确定要删除过往[所有]日志吗? [Y/n]: ') in ['Y','y']:
+                    os.remove(ROOT/'debug'/'bot.log')
+                    log('过往日志清理完毕')
+                else:
+                    log('取消清理')
 
             case _:
                 log('输入有误')

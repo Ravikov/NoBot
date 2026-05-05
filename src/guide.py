@@ -16,7 +16,7 @@ def set_llm(llm,project):
     print('请按要求输入配置内容,键入 N 或 直接Enter 表示此项保持不变')
     project_value = input(f'请设置{llm}的{project}: ')
     if project_value not in ['N','n','']:
-        with open(CONFIG_FILE+'\config.json','r',encoding='utf-8') as f:
+        with open(CONFIG_FILE,'r',encoding='utf-8') as f:
             config = json.load(f)
         if llm == '主模型':
             llm = 'API'
@@ -25,13 +25,13 @@ def set_llm(llm,project):
         elif llm == '联网模型':
             llm = 'searchAPI'
         config[llm][project] = project_value
-        with open(CONFIG_FILE+'\config.json','w',encoding='utf-8') as f:
+        with open(CONFIG_FILE,'w',encoding='utf-8') as f:
             json.dump(config,f,ensure_ascii=False,indent=2)
         print('配置已写入')
 
 def set_mainllm(project):
     print('请按要求输入配置内容,键入 N 或 直接Enter 表示此项保持不变')
-    with open(CONFIG_FILE+'\config.json','r',encoding='utf-8') as f:
+    with open(CONFIG_FILE,'r',encoding='utf-8') as f:
                 config = json.load(f)
     if project == 'temperature':
         value = input(f'请设置主模型参数[{project}](0~2之间的整数,默认1.1,当前{config["temperature"]}): ')
@@ -48,7 +48,7 @@ def set_mainllm(project):
         else:
             value = bool(value)
         config[project] = value
-        with open(CONFIG_FILE+'\config.json','w',encoding='utf-8') as f:
+        with open(CONFIG_FILE,'w',encoding='utf-8') as f:
             json.dump(config,f,ensure_ascii=False,indent=2)
         print('配置已写入')
 
@@ -63,12 +63,12 @@ def set_config():
     for p in mainllm_settings:
         set_mainllm(p)
     print('所有基础配置完毕')
-    with open(CONFIG_FILE+'\config.json','r',encoding='utf-8') as f:
+    with open(CONFIG_FILE,'r',encoding='utf-8') as f:
                 config = json.load(f)
     config['non_setup'] = False
-    with open(CONFIG_FILE+'\config.json','w',encoding='utf-8') as f:
+    with open(CONFIG_FILE,'w',encoding='utf-8') as f:
         json.dump(config,f,ensure_ascii=False,indent=2)
     print('角色提示词请写入config/role_prompt.txt文件')
     log('备份配置文件...')
-    shutil.copy2(CONFIG_FILE+'\config.json',CONFIG_FILE+'\config.json.bak')
+    shutil.copy2(CONFIG_FILE,CONFIGBAK_FILE)
     log('备份完毕')

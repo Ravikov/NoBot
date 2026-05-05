@@ -64,7 +64,7 @@ def wechat_bot():
 #----------微信clawbot接入----------
 def wechat_claw():
     def load_config():
-        with open(CONFIG_FILE+'\wechat_clawbot.json',"r",encoding='utf-8') as f:
+        with open(CLAWBOT_FILE,"r",encoding='utf-8') as f:
             wechat_clawbot = json.load(f)
         return wechat_clawbot
     
@@ -75,7 +75,7 @@ def wechat_claw():
     else:
         CLIENT_ID = str(uuid.uuid4())
         wechat_clawbot_config['clientid'] = CLIENT_ID
-        with open(CONFIG_FILE+'\wechat_clawbot.json','w',encoding='utf-8') as f:
+        with open(CLAWBOT_FILE,'w',encoding='utf-8') as f:
             json.dump(wechat_clawbot_config,f,ensure_ascii=False,indent=2)
 
     BASE_URL = 'https://ilinkai.weixin.qq.com'
@@ -187,7 +187,7 @@ def wechat_claw():
             wechat_clawbot['botid'] = connection.get('ilink_bot_id')
             wechat_clawbot['userid'] = connection.get('ilink_user_id')
             BASE_URL = connection.get('baseurl')
-            with open(CONFIG_FILE+'\wechat_clawbot.json',"w",encoding='utf-8') as f:
+            with open(CLAWBOT_FILE,"w",encoding='utf-8') as f:
                 json.dump(wechat_clawbot,f,ensure_ascii=False,indent=2)
 
         wechat_clawbot_config = load_config()
@@ -227,7 +227,7 @@ def wechat_claw():
             if a == -14:
                 log('会话过期error,将删除目前存储的token,请稍等一段时间再次运行,程序进入3600秒sleep,您可以退出重启以重新获取token')
                 wechat_clawbot_config['token'] = ''
-                with open(CONFIG_FILE+'\wechat_clawbot.json',"w",encoding='utf-8') as f:
+                with open(CLAWBOT_FILE,"w",encoding='utf-8') as f:
                     json.dump(wechat_clawbot_config,f,ensure_ascii=False,indent=2)
                 time.sleep(3600)
             s = False
@@ -323,7 +323,7 @@ def wechat_claw():
         # log(context_token)
         n = 0
         for msg in result:
-            if result != '':
+            if result != ' ':
                 threading.Thread(target=send_type,args=(ticket,)).start()
                 time.sleep(0.5)
                 if n == 0:

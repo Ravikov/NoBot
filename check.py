@@ -47,29 +47,30 @@ def check():
     }
 
     DEFAULT_MEMORY = {
-    "history": [
-      {
-        "role": "user",
-        "content": "对话格式举例"
-      },
-      {
-        "role": "assistant",
-        "content": "在在在#我刚在玩游戏#你呢 你干啥呢"
-      }
-    ],
-    "memory": [
+        "history": [
         {
-        "role": "system",
-        "content": ""
+            "role": "user",
+            "content": "对话格式举例"
+        },
+        {
+            "role": "assistant",
+            "content": "在在在#我刚在玩游戏#你呢 你干啥呢"
         }
-    ],
-    "turns": 0
+        ],
+        "memory": [
+            {
+            "role": "system",
+            "content": ""
+            }
+        ],
+        "turns": 0
     }
 
     DEFAULT_STATES = {
         "all_tokens": 0
     }
 
+    N = 0
     # 检查目录完整性
     filedirs = [
         'config',
@@ -79,25 +80,25 @@ def check():
         log(f'检查{d}目录是否存在...')
         filedir = Path(d)
         if not filedir.exists():
+            N+=1
             log(f'创建{d}目录...')
             filedir.mkdir(parents=True)
         else:
             log(f'{d}存在')
     # 检查文件完整性
     files = [
-        CONFIG_FILE+'\config.json',
-        CONFIG_FILE+'\config.json.bak',
-        CONFIG_FILE+'\wechat_clawbot.json',
-        CONFIG_FILE+'\\role_prompt.txt',
-        DEBUG_FILE+'\\bot.log',
-        DEBUG_FILE+'\\response.json',
-        DEBUG_FILE+'\states.json',
-        MEMORY_FILE+'\memory.json'
+        CONFIG_FILE,
+        CONFIGBAK_FILE,
+        CLAWBOT_FILE,
+        PROMPT_FILE,
+        ROOT/'debug'/'bot.log',
+        RESPONSEJSON_FILE,
+        STATEJSON_FILE,
+        MEMORY_FILE
     ]
     def w_json(file_name,default):
         with open(file_name,'w',encoding='utf-8') as f:
             json.dump(default,f,ensure_ascii=False,indent=2)
-    N = 0
     def check_file(file):
         nonlocal N
         if not file.exists():
@@ -105,16 +106,16 @@ def check():
             log(f'{file.name}不存在,尝试创建{file}...')
             with open(file,'w',encoding='utf-8') as f:
                 pass
-            if str(file) in [CONFIG_FILE+'\config.json',CONFIG_FILE+'\wechat_clawbot.json',DEBUG_FILE+'\states.json',MEMORY_FILE+'\memory.json']:
-                file = str(file)
+            if file in [CONFIG_FILE,CLAWBOT_FILE,STATEJSON_FILE,MEMORY_FILE]:
+                file = file
                 log(f'为{file}写入默认值...')
-                if file == CONFIG_FILE+'\config.json':
+                if file == CONFIG_FILE:
                     w_json(file,DEFAULT_CONFIG)
-                elif file == CONFIG_FILE+'\wechat_clawbot.json':
+                elif file == CLAWBOT_FILE:
                     w_json(file,DEFAULT_WECHATCLAW)
-                elif file == DEBUG_FILE+'\states.json':
+                elif file == STATEJSON_FILE:
                     w_json(file,DEFAULT_STATES)
-                elif file == MEMORY_FILE+'\memory.json':
+                elif file == MEMORY_FILE:
                     w_json(file,DEFAULT_MEMORY)
         else:
             pass

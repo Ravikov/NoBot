@@ -4,7 +4,7 @@ import time
 from src.common import *
 from debug.log import log
 
-with open(CONFIG_FILE+'\\'+config['prompt_file']+'.txt',"r",encoding="utf-8") as f:
+with open(PROMPT_FILE,"r",encoding="utf-8") as f:
     role_prompt = f.read()
 
 # api post函数
@@ -50,7 +50,7 @@ def get_re(key,url,model,messages,tem=0,max_tokens=2048,search=False):
     # log(response.text)
     # 将结果写入json文件
     orgin_result = response.json()
-    with open(DEBUG_FILE+'\\response.json','w',encoding = 'UTF-8') as f:
+    with open(RESPONSEJSON_FILE,'w',encoding = 'UTF-8') as f:
             json.dump(orgin_result, f, ensure_ascii=False, indent=2)
     # 输出status和延迟信息
     state = response.status_code
@@ -62,11 +62,11 @@ def get_re(key,url,model,messages,tem=0,max_tokens=2048,search=False):
     cache_hit_tokens = orgin_result.get("usage")
     cache_hit_tokens = cache_hit_tokens.get("prompt_cache_hit_tokens",'None')
 
-    with open(DEBUG_FILE+'\states.json','r',encoding='UTF-8') as f:
+    with open(STATEJSON_FILE,'r',encoding='UTF-8') as f:
         tokens = json.load(f)
     all_tokens = tokens.get("all_tokens") + total_tokens
     tokens["all_tokens"] = all_tokens
-    with open(DEBUG_FILE+'\states.json','w',encoding='UTF-8') as f:
+    with open(STATEJSON_FILE,'w',encoding='UTF-8') as f:
         json.dump(tokens,f,ensure_ascii=False,indent=2)
     
     log('调用结束...')
