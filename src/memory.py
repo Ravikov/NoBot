@@ -16,10 +16,20 @@ def set_memory():
         log(t,'error')
         return t,1
     else:
-        mem['history'] = []
+        mem['history'] = [
+            {
+                "role": "user",
+                "content": "对话格式举例"
+            },
+            {
+                "role": "assistant",
+                "content": "在在在#我刚在玩游戏#你呢 你干啥呢"
+            }
+        ]
         mem['turns'] = 0
         mem['memory'] = [{"role": "system", "content": f"{memory}"}]
         save_history(mem)
         t = '总结记忆完毕'
         log(t)
-        return list(t),0
+        t = ['总结记忆完毕',]
+        return t,0

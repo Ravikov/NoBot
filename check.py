@@ -23,7 +23,7 @@ def check():
             "name": "qwen3.6-flash"
         },
         "max_tokens": 1500,
-        "temperature": 1.1,
+        "temperature": 1.05,
         "prompt_file":"role_prompt",
         "max_history_turns": 20,
         "memory_prompt": "请将用户提供的对话消息记录和旧的记忆总结成新的记忆,根据不同信息的权重可以有适当的删减,但主要事件不应该改动",
