@@ -1,9 +1,10 @@
-# 目前包含两种常规启动方式
+# 目前包含三种常规启动方式
 # webhook
 # wechat(个人号,不可用)
+# wechat_clawbot
 # websocket开发中
-import asyncio
-import websocket
+# import asyncio
+# import websocket
 import qrcode
 import random
 import base64
@@ -16,6 +17,7 @@ import uuid
 from flask import Flask,request
 from debug.log import log
 from src.reply import reply
+from src.common import *
 
 
 # ==========<各种启动方式>==========
@@ -62,7 +64,7 @@ def wechat_bot():
 #----------微信clawbot接入----------
 def wechat_claw():
     def load_config():
-        with open('config/wechat_clawbot.json',"r",encoding='utf-8') as f:
+        with open(CONFIG_FILE+'\wechat_clawbot.json',"r",encoding='utf-8') as f:
             wechat_clawbot = json.load(f)
         return wechat_clawbot
     
@@ -73,7 +75,7 @@ def wechat_claw():
     else:
         CLIENT_ID = str(uuid.uuid4())
         wechat_clawbot_config['clientid'] = CLIENT_ID
-        with open('config/wechat_clawbot.json','w',encoding='utf-8') as f:
+        with open(CONFIG_FILE+'\wechat_clawbot.json','w',encoding='utf-8') as f:
             json.dump(wechat_clawbot_config,f,ensure_ascii=False,indent=2)
 
     BASE_URL = 'https://ilinkai.weixin.qq.com'
@@ -185,7 +187,7 @@ def wechat_claw():
             wechat_clawbot['botid'] = connection.get('ilink_bot_id')
             wechat_clawbot['userid'] = connection.get('ilink_user_id')
             BASE_URL = connection.get('baseurl')
-            with open('config/wechat_clawbot.json',"w",encoding='utf-8') as f:
+            with open(CONFIG_FILE+'\wechat_clawbot.json',"w",encoding='utf-8') as f:
                 json.dump(wechat_clawbot,f,ensure_ascii=False,indent=2)
 
         wechat_clawbot_config = load_config()
@@ -223,7 +225,10 @@ def wechat_claw():
         try:
             a = re.json()['errcode']
             if a == -14:
-                log('会话过期error,请稍等一段时间再次运行(ilinkAPI的错误,目前原因未知),程序进入3600秒sleep,您也可以选择退出')
+                log('会话过期error,将删除目前存储的token,请稍等一段时间再次运行,程序进入3600秒sleep,您可以退出重启以重新获取token')
+                wechat_clawbot_config['token'] = ''
+                with open(CONFIG_FILE+'\wechat_clawbot.json',"w",encoding='utf-8') as f:
+                    json.dump(wechat_clawbot_config,f,ensure_ascii=False,indent=2)
                 time.sleep(3600)
             s = False
         except KeyError:
@@ -318,47 +323,48 @@ def wechat_claw():
         # log(context_token)
         n = 0
         for msg in result:
-            threading.Thread(target=send_type,args=(ticket,)).start()
-            time.sleep(0.5)
-            if n == 0:
-                text_token = context_token
-            else:
-                text_token = ''
-            data = {
-                "msg": {
-                    "from_user_id": '',
-                    "to_user_id": to_user,
-                    "context_token": text_token,
-                    "message_type": 2,
-                    "message_state": 2,
-                    "client_id": str(uuid.uuid4()),
-                    "item_list": [
-                    {
-                        "type": 1,
-                        "text_item": {"text": msg}
-                    }
-                    ],
-                    'base_info': { 
-                        "channel_version": "2.0.0"
+            if result != '':
+                threading.Thread(target=send_type,args=(ticket,)).start()
+                time.sleep(0.5)
+                if n == 0:
+                    text_token = context_token
+                else:
+                    text_token = ''
+                data = {
+                    "msg": {
+                        "from_user_id": '',
+                        "to_user_id": to_user,
+                        "context_token": text_token,
+                        "message_type": 2,
+                        "message_state": 2,
+                        "client_id": str(uuid.uuid4()),
+                        "item_list": [
+                        {
+                            "type": 1,
+                            "text_item": {"text": msg}
+                        }
+                        ],
+                        'base_info': { 
+                            "channel_version": "2.0.0"
+                        }
                     }
                 }
-            }
-            # log(f"完整请求: {json.dumps(data, ensure_ascii=False)}") 
-            log(f'发送消息: {msg}')
-            token = wechat_clawbot_config['token']
-            re = requests.post(
-                f'{BASE_URL}/ilink/bot/sendmessage',
-                headers=set_headers_with_token(token),
-                json=data
-            )
-            time.sleep(2)
-            log(re.text)
-            if re.status_code == 200 and re.json() == {}:
-                log('本条消息发送成功')
-            else:
-                ret = re.json()['ret']
-                log(f'发送失败,状态码: {re.status_code} , 返回码: {ret}')
-                return 1
+                # log(f"完整请求: {json.dumps(data, ensure_ascii=False)}") 
+                log(f'发送消息: {msg}')
+                token = wechat_clawbot_config['token']
+                re = requests.post(
+                    f'{BASE_URL}/ilink/bot/sendmessage',
+                    headers=set_headers_with_token(token),
+                    json=data
+                )
+                time.sleep(2)
+                log(re.text)
+                if re.status_code == 200 and re.json() == {}:
+                    log('本条消息发送成功')
+                else:
+                    ret = re.json()['ret']
+                    log(f'发送失败,状态码: {re.status_code} , 返回码: {ret}')
+                    return 1
         log('所有消息发送完毕')
 
     # 调用函数

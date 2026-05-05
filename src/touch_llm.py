@@ -1,10 +1,10 @@
 import requests
 import json
 import time
-from src.common import load_history,config
+from src.common import *
 from debug.log import log
 
-with open('config/'+config['prompt_file']+'.txt',"r",encoding="utf-8") as f:
+with open(CONFIG_FILE+'\\'+config['prompt_file']+'.txt',"r",encoding="utf-8") as f:
     role_prompt = f.read()
 
 # api post函数
@@ -50,7 +50,7 @@ def get_re(key,url,model,messages,tem=0,max_tokens=2048,search=False):
     # log(response.text)
     # 将结果写入json文件
     orgin_result = response.json()
-    with open('debug/response.json','w',encoding = 'UTF-8') as f:
+    with open(DEBUG_FILE+'\\response.json','w',encoding = 'UTF-8') as f:
             json.dump(orgin_result, f, ensure_ascii=False, indent=2)
     # 输出status和延迟信息
     state = response.status_code
@@ -62,11 +62,11 @@ def get_re(key,url,model,messages,tem=0,max_tokens=2048,search=False):
     cache_hit_tokens = orgin_result.get("usage")
     cache_hit_tokens = cache_hit_tokens.get("prompt_cache_hit_tokens",'None')
 
-    with open("debug/states.json",'r',encoding='UTF-8') as f:
+    with open(DEBUG_FILE+'\states.json','r',encoding='UTF-8') as f:
         tokens = json.load(f)
     all_tokens = tokens.get("all_tokens") + total_tokens
     tokens["all_tokens"] = all_tokens
-    with open("debug/states.json",'w',encoding='UTF-8') as f:
+    with open(DEBUG_FILE+'\states.json','w',encoding='UTF-8') as f:
         json.dump(tokens,f,ensure_ascii=False,indent=2)
     
     log('调用结束...')
@@ -76,7 +76,7 @@ def get_re(key,url,model,messages,tem=0,max_tokens=2048,search=False):
     
 def get_time():
     if config['or_time_feel']:
-            now_time = [{"role":"user","content":f"当前时间:{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}"}]
+            now_time = [{"role":"system","content":f"当前时间:{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}"}]
     else:
         now_time = []
     return now_time
@@ -85,8 +85,7 @@ def get_time():
 def fst_llm(question):
     # 读取记忆并拼接message
     history = load_history()
-    messages = [{"role": "system", "content": role_prompt}]+history.get('history')+history.get('memory')+get_time()+[{"role": "user", "content": question}]
-    print(messages)
+    messages = [{"role": "system", "content": role_prompt}]+[{"role": "system", "content": '必须使用#符号对你的回答进行分段(仅在两段交界处),段数不限,不允许出现换行,不允许出现动作描述'}]+history.get('history')+history.get('memory')+get_time()+[{"role": "user", "content": question}]
     result,state,ms,orgin_result = get_re(config['API']['key'],config['API']['url'],config['API']['name'],messages,config['temperature'],config['max_tokens'])
     return result,state,ms,orgin_result
 
@@ -102,7 +101,7 @@ def sec_llm(tem,mes):
 # 联网搜索模型
 def search_api(mes):
     history = load_history()
-    messages = [{"role": "system", "content": role_prompt}]+history.get('history',[])+history.get('memory',[])+get_time()+[{"role": "user", "content": mes}]
+    messages = [{"role": "system", "content": role_prompt}]+[{"role": "system", "content": '必须使用#符号对你的回答进行分段(仅在两段交界处),段数不限,不允许出现换行,不允许出现动作描述'}]+history.get('history',[])+history.get('memory',[])+get_time()+[{"role": "user", "content": mes}]
     result,state,ms,orgin_result = get_re(config['searchAPI']['key'],config['searchAPI']['url'],config['searchAPI']['name'],messages,config['temperature'],config['max_tokens'],True)
     log('联网搜索模型完成调用')
     

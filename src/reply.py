@@ -1,3 +1,4 @@
+import time
 from src.common import load_history,save_history,config
 from src.memory import set_memory
 from src.touch_llm import fst_llm,sec_llm,search_api
@@ -14,12 +15,12 @@ def reply(mes):
         match mes[1:]:
             case 'rememory':
                 history = load_history()
-                history['history'] = []
+                history['history'] = [{"role": "user","content": "对话格式举例"},{"role": "assistant","content": "在在在#我刚在玩游戏#你呢 你干啥呢"}]
                 history['memory'] = [{"role": "system","content": ""}]
                 history['turns'] = 0
                 save_history(history)
                 log('清除记忆')
-                return '清除记忆成功',0
+                return ['清除记忆成功'],0
             case 'memory':
                 log('记忆总结...')
                 re,e = set_memory()
@@ -84,7 +85,7 @@ def reply(mes):
 
             log('写入记忆...')
             history = load_history()
-            history['history'].append({"role": "user", "content": mes})
+            history['history'].append({"role": "user", "content": f"[发送本条消息的时间:{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}]"+mes})
             # 将列表合并为字符串
             txt = ''
             n = 0

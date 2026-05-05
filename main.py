@@ -1,5 +1,5 @@
 # 主函数入口
-# v0.2.0
+# v0.4.8
 
 # 执行前检查
 from check import check
@@ -10,7 +10,7 @@ import threading
 import sys
 import io
 import shutil
-from src.common import config
+from src.common import *
 from debug.log import log
 from src.touch_llm import *
 from src.reply import reply
@@ -114,10 +114,10 @@ def run_bot():
             case 'set':
                 threading.Thread(target=set_config,daemon=True).start()
             case 'save':
-                shutil.copy('config/config.json','config/config.json.bak')
+                shutil.copy(CONFIG_FILE+'\config.json',CONFIG_FILE+'\config.json.bak')
                 log('备份配置文件成功!')
             case 'load':
-                shutil.copy('config/config.json.bak','config/config.json')
+                shutil.copy(CONFIG_FILE+'\config.json.bak',CONFIG_FILE+'\config.json')
                 log('加载配置文件成功!')
 
             case _:

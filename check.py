@@ -1,5 +1,6 @@
 from pathlib import Path
 from debug.log import log
+from src.common import *
 import json
 
 def check():
@@ -21,8 +22,8 @@ def check():
             "url": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
             "name": "qwen3.6-flash"
         },
-        "max_tokens": 2048,
-        "temperature": 1.2,
+        "max_tokens": 1500,
+        "temperature": 1.1,
         "prompt_file":"role_prompt",
         "max_history_turns": 20,
         "memory_prompt": "请将用户提供的对话消息记录和旧的记忆总结成新的记忆,根据不同信息的权重可以有适当的删减,但主要事件不应该改动",
@@ -46,7 +47,16 @@ def check():
     }
 
     DEFAULT_MEMORY = {
-    "history": [],
+    "history": [
+      {
+        "role": "user",
+        "content": "对话格式举例"
+      },
+      {
+        "role": "assistant",
+        "content": "在在在#我刚在玩游戏#你呢 你干啥呢"
+      }
+    ],
     "memory": [
         {
         "role": "system",
@@ -75,14 +85,14 @@ def check():
             log(f'{d}存在')
     # 检查文件完整性
     files = [
-        'config/config.json',
-        'config/config.json.bak',
-        'config/wechat_clawbot.json',
-        'config/role_prompt.txt',
-        'debug/bot.log',
-        'debug/response.json',
-        'debug/states.json',
-        'memory/memory.json'
+        CONFIG_FILE+'\config.json',
+        CONFIG_FILE+'\config.json.bak',
+        CONFIG_FILE+'\wechat_clawbot.json',
+        CONFIG_FILE+'\\role_prompt.txt',
+        DEBUG_FILE+'\\bot.log',
+        DEBUG_FILE+'\\response.json',
+        DEBUG_FILE+'\states.json',
+        MEMORY_FILE+'\memory.json'
     ]
     def w_json(file_name,default):
         with open(file_name,'w',encoding='utf-8') as f:
@@ -95,20 +105,17 @@ def check():
             log(f'{file.name}不存在,尝试创建{file}...')
             with open(file,'w',encoding='utf-8') as f:
                 pass
-            if str(file) in ['config\config.json','config\wechat_clawbot.json','debug\states.json','memory\memory.json']:
+            if str(file) in [CONFIG_FILE+'\config.json',CONFIG_FILE+'\wechat_clawbot.json',DEBUG_FILE+'\states.json',MEMORY_FILE+'\memory.json']:
                 file = str(file)
                 log(f'为{file}写入默认值...')
-                match file:
-                    case 'config\config.json':
-                        w_json(file,DEFAULT_CONFIG)
-                    case 'config\wechat_clawbot.json':
-                        w_json(file,DEFAULT_WECHATCLAW)
-                    case 'debug\states.json':
-                        w_json(file,DEFAULT_STATES)
-                    case 'memory\memory.json':
-                        w_json(file,DEFAULT_MEMORY)
-                    case _:
-                        pass
+                if file == CONFIG_FILE+'\config.json':
+                    w_json(file,DEFAULT_CONFIG)
+                elif file == CONFIG_FILE+'\wechat_clawbot.json':
+                    w_json(file,DEFAULT_WECHATCLAW)
+                elif file == DEBUG_FILE+'\states.json':
+                    w_json(file,DEFAULT_STATES)
+                elif file == MEMORY_FILE+'\memory.json':
+                    w_json(file,DEFAULT_MEMORY)
         else:
             pass
     log('校验配置文件完整性...')
