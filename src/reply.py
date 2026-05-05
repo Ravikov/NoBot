@@ -24,10 +24,7 @@ def reply(mes):
             case 'memory':
                 log('记忆总结...')
                 re,e = set_memory()
-                if e:
-                    return {'reply': re}
-                else:
-                    return {'reply': re}
+                return re,0
             case _:
                 log('未知指令,本次输入略过')
                 return ['未知的指令'],0
