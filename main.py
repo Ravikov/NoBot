@@ -2,8 +2,13 @@
 # v0.4.8
 
 # 执行前检查
+from debug.log import log
 from check import check
-check()
+O = 1
+fix_num = check()
+if fix_num != 0:
+    log('有文件被修复,需要重启主程序,请在程序自动退出后重新运行')
+    O = 0
 
 import time
 import threading
@@ -12,7 +17,6 @@ import io
 import shutil
 import os
 from src.common import *
-from debug.log import log
 from src.touch_llm import *
 from src.reply import reply
 from src.start_ways import *
@@ -43,9 +47,14 @@ def test(api,url=None,key=None,model=None):
 def run_bot():
     if __name__ == '__main__':
         log('程序启动')
+        time.sleep(1)
         if config['non_setup']:
             log('首次启动,编辑配置文件...')
-            start_way = 'set'
+            g = input('如果您的配置文件有备份,可以输入"Y"并回车来跳过索引[务必确定您有备份]: ')
+            if g in ['Y','y']:
+                start_way = 'load'
+            else:
+                start_way = 'set'
         else:
             print("""启动引导:
                 del-清理日志文件
@@ -140,5 +149,8 @@ def run_bot():
     
     return 0
 
-ender = run_bot()
+if O:
+    ender = run_bot()
+else:
+    ender = 'r'
 log(f'程序结束,结束码: {ender}')

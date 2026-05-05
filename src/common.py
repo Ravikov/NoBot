@@ -5,8 +5,11 @@ import pathlib
 ROOT = pathlib.Path(__file__).parent.parent
 CONFIG_FILE = ROOT / 'config' / 'config.json'
 # 配置（只读一次）
-with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-    config = json.load(f)
+try:
+    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+        config = json.load(f)
+except FileNotFoundError:
+    config = {'prompt_file':'role_prompt'}
 
 prompt_file = config['prompt_file']+'.txt'
 PROMPT_FILE = ROOT / 'config' / prompt_file

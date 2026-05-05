@@ -124,3 +124,4 @@ def check():
     for f in files:
         check_file(Path(f))
     log(f'校验完毕,修复{N}个文件')
+    return N
