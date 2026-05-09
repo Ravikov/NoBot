@@ -158,12 +158,11 @@ def wechat_claw():
             token = wechat_clawbot_config['token']
             log('验证token...')
         re = requests.post(
-            url=f'{BASE_URL}/ilink/bot/getupdates',
+            url=f'{BASE_URL}/ilink/bot/getconfig',
             headers=set_headers_with_token(token),
             json={
-                'get_updates_buf': wechat_clawbot_config['cursor'],
-                'client_id': CLIENT_ID,
-                'timeout_ms': 3000,
+                'ilink_user_id': wechat_clawbot_config['userid'],
+                'context_token': '',
                 'base_info': { 
                     "channel_version": "2.0.0"
                 }
