@@ -40,7 +40,7 @@ def reply(mes):
             log('调用联网搜索模型...')
             result,state,ms,orgin_result = search_api(mes)
         elif or_search == '0':
-            log('调用大模型api...')
+            log('调用主模型api...')
             result,state,ms,orgin_result = fst_llm(mes)
         else:
             log('辅助模型输出错误')

@@ -19,7 +19,8 @@ import os
 from src.common import *
 from src.touch_llm import *
 from src.reply import reply
-from src.start_ways import *
+from src.start.start_ways import *
+from src.start.wechat_clawbot import *
 from src.guide import set_config
 
 # 设置编码
