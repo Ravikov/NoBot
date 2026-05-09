@@ -113,9 +113,17 @@ def run_bot():
             case '2':
                 log('命令行启动...')
                 # 发起请求
-                question = input("请输入问题：")
-                result,ms = reply(question)
-                print(f'\n请求成功, 返回结果：\n\n{result}\n\n延迟{ms}s')
+                print('循环输入,按ctrl+c可以退出')
+                def cmd_start():
+                    try:
+                        while 1:
+                            question = input("请输入问题：")
+                            result,ms = reply(question)
+                            print(f'\n请求成功, 返回结果：\n\n{result}\n\n延迟{ms}s')
+                            time.sleep(0.5)
+                    except EOFError:
+                        print('\n')
+                threading.Thread(target=cmd_start,daemon=True).start()
             case '3':
                 log('微信启动...')
                 threading.Thread(target=wechat_bot,daemon=True).start()
@@ -140,18 +148,18 @@ def run_bot():
 
             case _:
                 log('输入有误')
-
-        try:
-            while True:
-                time.sleep(2)
-        except KeyboardInterrupt:
-            log('收到终止指令...')
-            log("程序优雅退出~")
     
     return 0
 
 if O:
-    ender = run_bot()
+    try:
+        ender = run_bot()
+        while True:
+            time.sleep(2)
+    except KeyboardInterrupt:
+        log('收到终止指令,3秒后退出...')
+        time.sleep(3)
+        log("程序优雅退出~")
 else:
     ender = 'r'
 log(f'程序结束,结束码: {ender}')

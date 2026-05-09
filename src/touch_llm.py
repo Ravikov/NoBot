@@ -92,7 +92,7 @@ def fst_llm(question):
 # 辅助api调用函数
 def sec_llm(tem,mes):
     messages = mes
-    result,state,ms,orgin_result = get_re(config['secAPI']['key'],config['secAPI']['url'],config['secAPI']['name'],messages,tem,1500)
+    result,state,ms,orgin_result = get_re(config['secAPI']['key'],config['secAPI']['url'],config['secAPI']['name'],messages,tem,4096)
 
     log('辅助模型完成调用')
     sec_result = result

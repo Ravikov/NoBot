@@ -29,13 +29,16 @@ def reply(mes):
                 log('未知指令,本次输入略过')
                 return {'type':1,'msg':['未知的指令']},0
     else:
-        log('调用辅助模型判断联网功能...')
-        or_search = sec_llm(
-            0,
-            [{'role': 'system','content': mes}]+
-            config['or_search_prompt']
-        )
-        log(f'判断完毕,结果: {or_search}')
+        if config['or_search']:
+            log('调用辅助模型判断联网功能...')
+            or_search = sec_llm(
+                0,
+                [{'role': 'system','content': mes}]+
+                config['or_search_prompt']
+            )
+            log(f'判断完毕,结果: {or_search}')
+        else:
+            or_search = '0'
         if or_search == '1':
             log('调用联网搜索模型...')
             result,state,ms,orgin_result = search_api(mes)
@@ -78,7 +81,7 @@ def reply(mes):
             history = load_history()
             if history.get('turns') >= config.get('max_history_turns') - 1:
                 log('需要进行记忆总结,正在调用api')
-                set_memory()
+                set_memory(config.get('max_history_turns'))
             else:
                 pass
 
