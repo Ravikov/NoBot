@@ -269,50 +269,53 @@ def wechat_claw():
         ticket = get_ticket()
 
         # log(context_token)
-        n = 0
-        for msg in result:
-            if result != ' ':
-                threading.Thread(target=send_type,args=(ticket,)).start()
-                time.sleep(0.5)
-                if n == 0:
-                    text_token = context_token
-                else:
-                    text_token = ''
-                data = {
-                    "msg": {
-                        "from_user_id": '',
-                        "to_user_id": to_user,
-                        "context_token": text_token,
-                        "message_type": 2,
-                        "message_state": 2,
-                        "client_id": str(uuid.uuid4()),
-                        "item_list": [
-                        {
-                            "type": 1,
-                            "text_item": {"text": msg}
-                        }
-                        ],
-                        'base_info': { 
-                            "channel_version": "2.0.0"
+        n = 1
+        if result['type'] == 1:
+            log(f'回复类型: text,总条数: {len(result["msg"])}')
+            for msg in result['msg']:
+                if msg != ' ':
+                    threading.Thread(target=send_type,args=(ticket,)).start()
+                    time.sleep(0.5)
+                    if n == 1:
+                        text_token = context_token
+                    else:
+                        text_token = ''
+                    data = {
+                        "msg": {
+                            "from_user_id": '',
+                            "to_user_id": to_user,
+                            "context_token": text_token,
+                            "message_type": 2,
+                            "message_state": 2,
+                            "client_id": str(uuid.uuid4()),
+                            "item_list": [
+                            {
+                                "type": 1,
+                                "text_item": {"text": msg}
+                            }
+                            ],
+                            'base_info': { 
+                                "channel_version": "2.0.0"
+                            }
                         }
                     }
-                }
-                # log(f"完整请求: {json.dumps(data, ensure_ascii=False)}") 
-                log(f'发送消息: {msg}')
-                token = wechat_clawbot_config['token']
-                re = requests.post(
-                    f'{BASE_URL}/ilink/bot/sendmessage',
-                    headers=set_headers_with_token(token),
-                    json=data
-                )
-                time.sleep(2)
-                log(re.text)
-                if re.status_code == 200 and re.json() == {}:
-                    log('本条消息发送成功')
-                else:
-                    ret = re.json()['ret']
-                    log(f'发送失败,状态码: {re.status_code} , 返回码: {ret}')
-                    return 1
+                    # log(f"完整请求: {json.dumps(data, ensure_ascii=False)}") 
+                    log(f'发送第{n}条消息: {msg}')
+                    token = wechat_clawbot_config['token']
+                    re = requests.post(
+                        f'{BASE_URL}/ilink/bot/sendmessage',
+                        headers=set_headers_with_token(token),
+                        json=data
+                    )
+                    time.sleep(2)
+                    log(re.text)
+                    if re.status_code == 200 and re.json() == {}:
+                        log('本条消息发送成功')
+                        n += 1
+                    else:
+                        ret = re.json()['ret']
+                        log(f'发送失败,状态码: {re.status_code} , 返回码: {ret}')
+                        return 1
         log('所有消息发送完毕')
 
     # 调用函数

@@ -20,14 +20,14 @@ def reply(mes):
                 history['turns'] = 0
                 save_history(history)
                 log('清除记忆')
-                return ['清除记忆成功'],0
+                return {'type':1,'msg':['清除记忆成功']},0
             case 'memory':
                 log('记忆总结...')
                 re,e = set_memory()
                 return re,0
             case _:
                 log('未知指令,本次输入略过')
-                return ['未知的指令'],0
+                return {'type':1,'msg':['未知的指令']},0
     else:
         log('调用辅助模型判断联网功能...')
         or_search = sec_llm(
@@ -99,7 +99,7 @@ def reply(mes):
             save_history(history)
             log('写入完毕')
 
-            return result,ms
+            return {'type':1,'msg':result},ms
         
         else:
             log(f'状态码错误 {result}','Warn')
