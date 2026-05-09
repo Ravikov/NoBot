@@ -18,8 +18,6 @@ def set_llm(llm,project,or_search):
             return 0
     project_value = input(f'请设置{llm}的{project}: ')
     if project_value not in ['N','n','']:
-        with open(CONFIG_FILE,'r',encoding='utf-8') as f:
-            config = json.load(f)
         if llm == '主模型':
             llm = 'API'
         elif llm == '辅助模型':
@@ -33,7 +31,7 @@ def set_llm(llm,project,or_search):
 
 def set_mainllm(project):
     if project == 'temperature':
-        value = input(f'请设置主模型参数[{project}](0~2之间的整数,默认1.1,当前{config["temperature"]}): ')
+        value = input(f'请设置主模型参数[{project}](0~2之间的整数,默认1.05,当前{config["temperature"]}): ')
         project = 'temperature'
     elif project == '最大上下文轮数': 
         value = input(f'请设置主模型参数[{project}](默认20,必须为整数,当前{config["max_history_turns"]}): ')
@@ -64,7 +62,7 @@ def set_config():
             else:
                 or_search = True
         else:
-            or_search = True
+            or_search = config['or_search']
         config['or_search'] = or_search
         with open(CONFIG_FILE,'w',encoding='utf-8') as f:
             json.dump(config,f,ensure_ascii=False,indent=2)
