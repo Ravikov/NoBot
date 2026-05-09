@@ -81,7 +81,7 @@ def reply(mes):
             history = load_history()
             if history.get('turns') >= config.get('max_history_turns') - 1:
                 log('需要进行记忆总结,正在调用api')
-                set_memory(config.get('max_history_turns'))
+                set_memory()
             else:
                 pass
 

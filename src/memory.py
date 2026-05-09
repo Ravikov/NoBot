@@ -2,7 +2,7 @@ from src.touch_llm import sec_llm
 from src.common import config,load_history,save_history
 from debug.log import log
 
-def set_memory(max_turn):
+def set_memory():
     mem = load_history()
     memory = sec_llm(
         0,
@@ -15,13 +15,7 @@ def set_memory(max_turn):
         log(t,'error')
         return t,1
     else:
-        if max_turn-10 >= 1:
-            turn = -10
-        elif max_turn >= 2:
-            turn = 1
-        else:
-            turn = 0
-        mem['history'] = mem['history'][-turn:]
+        mem['history'] = mem['history'][-10:]
         mem['turns'] = 0
         mem['memory'] = [{"role": "system", "content": f"[过往记忆]{memory}"}]
         save_history(mem)
