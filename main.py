@@ -70,7 +70,7 @@ def run_bot():
             """)
             print('在下方输入选择编号并回车,程序运行途中,您可以随时按 CTRL+C 退出,包括现在')
             try:
-                start_way = input()
+                start_way = input('>>> ')
             except KeyboardInterrupt:
                 log('选择中断')
                 return 0
