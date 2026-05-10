@@ -74,7 +74,6 @@ def reply(mes):
                     txt = ''
             re.append(txt)
             result = re
-            log(type(result))
 
             log(f'状态正确,提交回复: {result}')
 
@@ -105,5 +104,5 @@ def reply(mes):
             return {'type':1,'msg':result},ms
         
         else:
-            log(f'状态码错误 {result}','Warn')
-            return f"api错误: {result}",0
+            log(f'状态码错误 {state}','Warn')
+            return {'type': 1,'msg':f"api错误: {state}"},0

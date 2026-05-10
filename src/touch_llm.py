@@ -37,42 +37,45 @@ def connect(key,url,model,messages,tem=0,max_tokens=2048,search=False):
     # 发出post请求
     response = api_post(headers,data,url)
     if response.status_code == 200:
-        return response
+        return response,200
     else:
         log(response.text)
         log('状态码错误: '+str(response.status_code))
-        return 1
+        return 1,response.status_code
 
 # 调用函数
 def get_re(key,url,model,messages,tem=0,max_tokens=2048,search=False):
-    response = connect(key,url,model,messages,tem,max_tokens,search)
+    response,state = connect(key,url,model,messages,tem,max_tokens,search)
 
     # log(response.text)
     # 将结果写入json文件
-    orgin_result = response.json()
-    with open(RESPONSEJSON_FILE,'w',encoding = 'UTF-8') as f:
-            json.dump(orgin_result, f, ensure_ascii=False, indent=2)
-    # 输出status和延迟信息
-    state = response.status_code
-    ms = response.elapsed.total_seconds()
-    # 提取json文件中的有效部分
-    result = orgin_result["choices"][0]["message"]["content"]
+    if state == 200:
+        orgin_result = response.json()
+        with open(RESPONSEJSON_FILE,'w',encoding = 'UTF-8') as f:
+                json.dump(orgin_result, f, ensure_ascii=False, indent=2)
+        # 输出status和延迟信息
+        state = response.status_code
+        ms = response.elapsed.total_seconds()
+        # 提取json文件中的有效部分
+        result = orgin_result["choices"][0]["message"]["content"]
 
-    total_tokens = orgin_result["usage"]["total_tokens"]
-    cache_hit_tokens = orgin_result.get("usage")
-    cache_hit_tokens = cache_hit_tokens.get("prompt_cache_hit_tokens",'None')
+        total_tokens = orgin_result["usage"]["total_tokens"]
+        cache_hit_tokens = orgin_result.get("usage")
+        cache_hit_tokens = cache_hit_tokens.get("prompt_cache_hit_tokens",'None')
 
-    with open(STATEJSON_FILE,'r',encoding='UTF-8') as f:
-        tokens = json.load(f)
-    all_tokens = tokens.get("all_tokens") + total_tokens
-    tokens["all_tokens"] = all_tokens
-    with open(STATEJSON_FILE,'w',encoding='UTF-8') as f:
-        json.dump(tokens,f,ensure_ascii=False,indent=2)
-    
-    log('调用结束...')
-    log(f'模型token使用...总tokens: {total_tokens},缓存命中: {cache_hit_tokens},累计tokens: {all_tokens}')
+        with open(STATEJSON_FILE,'r',encoding='UTF-8') as f:
+            tokens = json.load(f)
+        all_tokens = tokens.get("all_tokens") + total_tokens
+        tokens["all_tokens"] = all_tokens
+        with open(STATEJSON_FILE,'w',encoding='UTF-8') as f:
+            json.dump(tokens,f,ensure_ascii=False,indent=2)
+        
+        log('调用结束...')
+        log(f'模型token使用...总tokens: {total_tokens},缓存命中: {cache_hit_tokens},累计tokens: {all_tokens}')
 
-    return result,state,ms,orgin_result
+        return result,state,ms,orgin_result
+    else:
+        return 1,state,1,1
     
 def get_time():
     if config['or_time_feel']:
