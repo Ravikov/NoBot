@@ -94,6 +94,9 @@ def wechat_claw():
                 return None
             
             return response.json()  # 返回解析后的 JSON 字典
+        except requests.exceptions.ConnectionError:
+            log('连接断开,重试...')
+            return None
         except requests.exceptions.ReadTimeout:
             log('等待...')
             return None
