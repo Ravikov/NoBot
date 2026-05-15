@@ -5,14 +5,25 @@ from src.touch_llm import fst_llm,sec_llm,search_api
 from debug.log import log
 
 def reply(mes):
-    if not mes:
-        log('消息为空')
-        return "消息异常"
+    """
+    处理消息并生成回复
+    返回: ({'type': int, 'msg': list}, ms)
+      type=1: 正常文本回复
+      type=2: 错误消息
+    (Edited by DeepSeek TUI: 统一返回值协议)
+    """
+    # 判断消息类型
+    if mes['type'] == 1:
+        msg = mes['msg']
     else:
-        pass
+        msg = ''
 
-    if mes[0] == '/':
-        match mes[1:]:
+    if not msg:
+        log('消息为空')
+        return {'type': 2, 'msg': ['消息异常']}, 0
+
+    if msg[0] == '/':
+        match msg[1:]:
             case 'rememory':
                 history = load_history()
                 history['history'] = [{"role": "user","content": "对话格式举例"},{"role": "assistant","content": "在在在#我刚在玩游戏#你呢 你干啥呢"}]
@@ -20,20 +31,20 @@ def reply(mes):
                 history['turns'] = 0
                 save_history(history)
                 log('清除记忆')
-                return {'type':1,'msg':['清除记忆成功']},0
+                return {'type': 1, 'msg': ['清除记忆成功']}, 0
             case 'memory':
                 log('记忆总结...')
-                re,e = set_memory()
-                return re,0
+                re, e = set_memory()
+                return re, 0
             case _:
                 log('未知指令,本次输入略过')
-                return {'type':1,'msg':['未知的指令']},0
+                return {'type': 1, 'msg': ['未知的指令']}, 0
     else:
         if config['or_search']:
             log('调用辅助模型判断联网功能...')
             or_search = sec_llm(
                 0,
-                [{'role': 'system','content': mes}]+
+                [{'role': 'system','content': msg}]+
                 config['or_search_prompt']
             )
             log(f'判断完毕,结果: {or_search}')
@@ -41,13 +52,13 @@ def reply(mes):
             or_search = '0'
         if or_search == '1':
             log('调用联网搜索模型...')
-            result,state,ms,orgin_result = search_api(mes)
+            result,state,ms,orgin_result = search_api(msg)
         elif or_search == '0':
             log('调用主模型api...')
-            result,state,ms,orgin_result = fst_llm(mes)
+            result,state,ms,orgin_result = fst_llm(msg)
         else:
             log('辅助模型输出错误')
-            return 1,0
+            return {'type': 2, 'msg': ['辅助模型判断异常']}, 0
 
         log('状态码审查...')
         log(str(orgin_result))
@@ -86,7 +97,7 @@ def reply(mes):
 
             log('写入记忆...')
             history = load_history()
-            history['history'].append({"role": "user", "content": f"[发送本条消息的时间:{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}]"+mes})
+            history['history'].append({"role": "user", "content": f"[发送本条消息的时间:{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}]"+msg})
             # 将列表合并为字符串
             txt = ''
             n = 0
@@ -101,8 +112,8 @@ def reply(mes):
             save_history(history)
             log('写入完毕')
 
-            return {'type':1,'msg':result},ms
+            return {'type': 1, 'msg': result}, ms
         
         else:
             log(f'状态码错误 {state}','Warn')
-            return {'type': 1,'msg':f"api错误: {state}"},0
+            return {'type': 2, 'msg': [f'api错误: {state}']}, 0

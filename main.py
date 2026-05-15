@@ -32,7 +32,7 @@ def test(api,url=None,key=None,model=None):
         re = connect(key,url,model,[{'role':'user','content':'Just Answer 1'}])
     else:
         re =  connect(config[api]['key'],config[api]['url'],config[api]['name'],[{'role':'user','content':'Just Answer 1'}])
-    if re != 1:
+    if re is not None:  # connect 失败时返回 None (Edited by DeepSeek TUI)
         log('测试返回'+re.text)
         re = re.json()
         if re["choices"][0]["message"]["content"] == '1':
@@ -118,7 +118,7 @@ def run_bot():
                     try:
                         while 1:
                             question = input("请输入问题：")
-                            result,ms = reply(question)
+                            result,ms = reply({'type': 1,'msg':question})
                             print(f'\n请求成功, 返回结果：\n\n{result}\n\n延迟{ms}s')
                             time.sleep(0.5)
                     except EOFError:

@@ -34,7 +34,7 @@ Currently, configuration settings are typically done through command-line guidan
 - Upon restart, you'll enter the runtime mode selection menu. Choose the appropriate mode by entering its number. Generally, it's recommended to select "WeChat ClawBot".
 - The first time you start ClawBot, it will automatically obtain a QR code. Scan it with WeChat to log in. Once the command line shows "Waiting for long polling messages...", you can start chatting.
 - *Due to some latency in the iLink API, response times may be a bit slow. I will try to optimize this in the future, but the effect may not be perfect.*
-- **Multimodal capabilities are not yet supported,** so messages sent to WeChat can only be text. Other types of messages will not be processed and may cause errors.
+- **Image messages can now be received and saved locally, but multimodal visual replies are not yet supported.** Images are saved as `get_image_timestamp.jpg` in the project root directory.
 
 ## How to Use
 
@@ -67,7 +67,15 @@ This directory contains only one file: `memory.json`, which stores conversation 
 
 ### `src/`
 
-This is the source code. No further explanation needed.
+This is the source code. Main file responsibilities:
+
+- `touch_llm.py` — Low-level LLM API calls
+- `reply.py` — Message routing: normal chat vs quick commands
+- `memory.py` — Memory compression using the auxiliary model
+- `common.py` — Global paths and config loading
+- `start/wechat_clawbot.py` — Full WeChat ClawBot logic: login, receive, reply
+- `start/start_ways.py` — Other startup modes (webhook, CLI, etc.)
+- `guide.py` — Command-line configuration wizard
 
 ### Quick Commands
 

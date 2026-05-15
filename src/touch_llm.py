@@ -41,7 +41,7 @@ def connect(key,url,model,messages,tem=0,max_tokens=2048,search=False):
     else:
         log(response.text)
         log('状态码错误: '+str(response.status_code))
-        return 1,response.status_code
+        return None, response.status_code  # 返回 None 而非 1, 避免与有效返回值混淆 (Edited by DeepSeek TUI)
 
 # 调用函数
 def get_re(key,url,model,messages,tem=0,max_tokens=2048,search=False):
@@ -75,7 +75,7 @@ def get_re(key,url,model,messages,tem=0,max_tokens=2048,search=False):
 
         return result,state,ms,orgin_result
     else:
-        return 1,state,1,1
+        return None, state, None, None  # 返回 None 而非 1, 避免与有效返回值混淆 (Edited by DeepSeek TUI)
     
 def get_time():
     if config['or_time_feel']:

@@ -223,3 +223,9 @@ __marimo__/
 /debug/states.json
 /memory/memory.json
 test.py
+test.json
+get_image*.jpg
+get_image*.png
+# DeepSeek TUI 项目指令目录
+/.deepseek/
+/.deepseek

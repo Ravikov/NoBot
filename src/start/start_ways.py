@@ -28,29 +28,30 @@ def webhook():
     else:
         log('忽略错误格式')
 
-    result,ms = reply(mes)
+    result,ms = reply({'type': 1,'msg': mes})
 
     return {"reply":result}
 
 # ----------微信个人账号启动----------
 # 不可用的微信服务...
 def wechat_bot():
-    import itchat
-    from itchat.content import TEXT
+    log('服务不可用,请退出')
+    # import itchat
+    # from itchat.content import TEXT
 
-    @itchat.msg_register(TEXT)
-    def handle_msg(msg):
-        user_msg = msg['Text']
-        log(f'收到微信消息: {user_msg}')
-        # 你的 reply 返回 (result, ms)，我们只要 result
-        reply_text, _ = reply(user_msg)
-        log(f'微信回复: {reply_text[:50]}')
-        return reply_text
+    # @itchat.msg_register(TEXT)
+    # def handle_msg(msg):
+    #     user_msg = msg['Text']
+    #     log(f'收到微信消息: {user_msg}')
+    #     # 你的 reply 返回 (result, ms)，我们只要 result
+    #     reply_text, _ = reply(user_msg)
+    #     log(f'微信回复: {reply_text[:50]}')
+    #     return reply_text
 
-    log('微信Bot启动，扫码登录...')
-    itchat.auto_login(hotReload=True, enableCmdQR=2)
-    log('登录成功，开始处理消息')
-    itchat.run()
+    # log('微信Bot启动，扫码登录...')
+    # itchat.auto_login(hotReload=True, enableCmdQR=2)
+    # log('登录成功，开始处理消息')
+    # itchat.run()
 
 #----------微信clawbot接入----------
 # 详见对应模块
