@@ -35,7 +35,7 @@ def set_llm(llm,project,or_search):
 
 def set_mainllm(project):
     if project == 'temperature':
-        value = input(f'请设置主模型参数[{project}](0~2之间的整数,默认1.05,当前{config["temperature"]}): ')
+        value = input(f'请设置主模型参数[{project}](0~2之间的整数,默认1.0,当前{config["temperature"]}): ')
         project = 'temperature'
     elif project == '最大上下文轮数': 
         value = input(f'请设置主模型参数[{project}](默认20,必须为整数,当前{config["max_history_turns"]}): ')

@@ -33,7 +33,7 @@ def check():
             "name": "qwen3.6-flash"
         },
         "max_tokens": 1500,
-        "temperature": 1.05,
+        "temperature": 1.0,
         "prompt_file":"role_prompt",
         "max_history_turns": 20,
         "save_turns": 10,
@@ -62,7 +62,7 @@ def check():
         "history": [
         {
             "role": "user",
-            "content": "对话格式举例"
+            "content": "对话格式举例,回复格式请遵从于此"
         },
         {
             "role": "assistant",
