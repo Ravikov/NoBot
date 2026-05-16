@@ -140,11 +140,11 @@ def unlock_media(aeskey, media):
 
     data = unlocked[:-ful_len]
     log(f'去除padding后数据长度: {len(data)} bytes')
-    filename = f'get_image_{int(time.time())}.jpg'
-    with open(filename, 'wb') as f:
-        f.write(data)
-    log(f'图片已保存: {filename}')
-    return filename
+    # filename = f'get_image_{int(time.time())}.jpg'
+    # with open(filename, 'wb') as f:
+    #     f.write(data)
+    # log(f'图片已保存: {filename}')
+    return base64.b64encode(data).decode('utf-8')
 
 
 # ========== 消息收发 ==========
@@ -165,7 +165,7 @@ def fetch_one_message(token, uin, client_id, config_dict, base_url):
                 'base_info': {"channel_version": "2.0.0"}
             }
             resp = requests.post(url=url, headers=headers, json=data)
-            log(resp.text)
+            # log(resp.text)
             if resp.json().get('msgs'):
                 state = resp.status_code
                 body = resp.json()
@@ -184,15 +184,14 @@ def fetch_one_message(token, uin, client_id, config_dict, base_url):
     # 文本消息
     if msg_type == 1:
         msg = body['msgs'][0]['item_list'][0]['text_item']['text']
-    # 图片消息处理 (Edited by DeepSeek TUI)
+    # 图片消息处理
     elif msg_type == 2:
         aeskey = body['msgs'][0]['item_list'][0]['image_item']['aeskey']  # hex 串 (Edited by DeepSeek TUI)
         media = download_media(
             body['msgs'][0]['item_list'][0]['image_item']['media']['full_url'],
             token, uin
         )
-        filename = unlock_media(aeskey, media)
-        msg = filename if filename else '[图片]'
+        msg = unlock_media(aeskey, media)
     else:
         msg = ''
         log(f'未知消息类型: {msg_type}', 'Warn')
@@ -387,12 +386,16 @@ def wechat_claw():
         if msg_type == 1:
             log('生成回复...')
             result, ms = reply({'type': 1, 'msg': msg})
-            if result['type'] == 1:  # 正常回复 (Edited by DeepSeek TUI)
-                send_reply_messages(result, to_user, context_token, config_dict)
-            else:
-                log('LLM 回复失败', 'Warn')
+        elif msg_type == 2:
+            log('处理图片消息...')
+            result, ms = reply({'type': 2, 'msg': msg})
         else:
             log('不支持的格式!', 'Warn')
+            return 1
+        if result['type'] == 1:  # 正常回复 (Edited by DeepSeek TUI)
+                send_reply_messages(result, to_user, context_token, config_dict)
+        else:
+            log('LLM 回复失败', 'Warn')
 
     # ---- 主循环 ----
     def loop_run():
@@ -401,7 +404,8 @@ def wechat_claw():
             msg, msg_type, to_user, context_token = fetch_one_message(
                 token, UIN, CLIENT_ID, config_dict, BASE_URL
             )
-            log(f'消息监听get: {msg}, 类型: {msg_type}')
+            if msg_type == 1:
+                log(f'消息监听get: {msg}, 类型: {msg_type}')
             handle_and_reply(msg, msg_type, to_user, context_token)
 
     loop_run()

@@ -22,6 +22,16 @@ def check():
             "url": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
             "name": "qwen3.6-flash"
         },
+        "multimodalAPI": {
+            "key": "",
+            "url": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+            "name": "qwen3.6-flash"
+        },
+        "imageAPI": {
+            "key": "",
+            "url": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+            "name": "qwen3.6-flash"
+        },
         "max_tokens": 1500,
         "temperature": 1.05,
         "prompt_file":"role_prompt",

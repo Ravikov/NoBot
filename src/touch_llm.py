@@ -17,7 +17,7 @@ def api_post(headers,data,url):
     )
     return response
 
-def connect(key,url,model,messages,tem=0,max_tokens=2048,search=False):
+def connect(messages=None,key=None,url=None,model=None,tem=0,max_tokens=2048,search=False,data=False):
     # 准备headers
     headers = {
         "Authorization": f'Bearer {key}',  # 证明你有权限调用
@@ -25,14 +25,17 @@ def connect(key,url,model,messages,tem=0,max_tokens=2048,search=False):
     }
 
     # 创建data
-    data = {
-        "model": model,
-        "messages": messages,
-        "max_tokens": max_tokens,
-        "temperature": tem,
-        "enable_web_search": search,
-        "thinking": {"type": "disabled"}
-    }
+    if data:
+        pass
+    else:
+        data = {
+            "model": model,
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "temperature": tem,
+            "enable_web_search": search,
+            "thinking": {"type": "disabled"}
+        }
 
     # 发出post请求
     response = api_post(headers,data,url)
@@ -89,13 +92,13 @@ def fst_llm(question):
     # 读取记忆并拼接message
     history = load_history()
     messages = [{"role": "system", "content": role_prompt}]+[{"role": "system", "content": '必须使用#符号对你的回答进行分段(仅在两段交界处),段数不限,不允许出现换行,不允许出现动作描述'}]+history.get('history')+history.get('memory')+get_time()+[{"role": "user", "content": question}]
-    result,state,ms,orgin_result = get_re(config['API']['key'],config['API']['url'],config['API']['name'],messages,config['temperature'],config['max_tokens'])
+    result,state,ms,orgin_result = get_re(messages,config['API']['key'],config['API']['url'],config['API']['name'],config['temperature'],config['max_tokens'])
     return result,state,ms,orgin_result
 
 # 辅助api调用函数
 def sec_llm(tem,mes):
     messages = mes
-    result,state,ms,orgin_result = get_re(config['secAPI']['key'],config['secAPI']['url'],config['secAPI']['name'],messages,tem,4096)
+    result,state,ms,orgin_result = get_re(messages,config['secAPI']['key'],config['secAPI']['url'],config['secAPI']['name'],tem,4096)
 
     log('辅助模型完成调用')
     sec_result = result
@@ -105,7 +108,27 @@ def sec_llm(tem,mes):
 def search_api(mes):
     history = load_history()
     messages = [{"role": "system", "content": role_prompt}]+[{"role": "system", "content": '必须使用#符号对你的回答进行分段(仅在两段交界处),段数不限,不允许出现换行,不允许出现动作描述'}]+history.get('history',[])+history.get('memory',[])+get_time()+[{"role": "user", "content": mes}]
-    result,state,ms,orgin_result = get_re(config['searchAPI']['key'],config['searchAPI']['url'],config['searchAPI']['name'],messages,config['temperature'],config['max_tokens'],True)
+    result,state,ms,orgin_result = get_re(messages,config['searchAPI']['key'],config['searchAPI']['url'],config['searchAPI']['name'],config['temperature'],config['max_tokens'],True)
     log('联网搜索模型完成调用')
     
+    return result,state,ms,orgin_result
+
+# 多模态理解模型
+def multimodal(mes,image):
+    messages = [
+    {
+        'role':'user',
+        'content':[
+            {'type':'text','text':mes},
+            {
+                'type':'image_url',
+                'image_url':{
+                    'url':f'data:image/jpeg;base64,{image}'
+                }
+            }
+        ]
+    }
+    ]
+    result,state,ms,orgin_result = get_re(messages,config['multimodalAPI']['key'],config['multimodalAPI']['url'],config['multimodalAPI']['name'],1.0,2048,True)
+    log('图片理解完毕')
     return result,state,ms,orgin_result

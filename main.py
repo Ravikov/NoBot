@@ -20,7 +20,7 @@ from src.common import *
 from src.touch_llm import *
 from src.reply import reply
 from src.start.start_ways import *
-from src.start.wechat_clawbot import *
+from src.start.clawbot.wechat_clawbot import *
 from src.guide import set_config
 
 # 设置编码
@@ -157,8 +157,8 @@ if O:
         while True:
             time.sleep(2)
     except KeyboardInterrupt:
-        log('收到终止指令,3秒后退出...')
-        time.sleep(3)
+        log('收到终止指令,2秒后退出...')
+        time.sleep(2)
         log("程序优雅退出~")
 else:
     ender = 'r'

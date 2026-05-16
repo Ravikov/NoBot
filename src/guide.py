@@ -24,6 +24,10 @@ def set_llm(llm,project,or_search):
             llm = 'secAPI'
         elif llm == '联网模型':
             llm = 'searchAPI'
+        elif llm == '多模态理解模型':
+            llm = 'multimodalAPI'
+        elif llm == '生图模型':
+            llm = 'imageAPI'
         config[llm][project] = project_value
         with open(CONFIG_FILE,'w',encoding='utf-8') as f:
             json.dump(config,f,ensure_ascii=False,indent=2)

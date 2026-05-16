@@ -23,7 +23,9 @@ RESPONSEJSON_FILE = ROOT / 'debug' / 'response.json'
 llm_list = [
     '主模型',
     '辅助模型',
-    '联网模型'
+    '联网模型',
+    '多模态理解模型',
+    '生图模型'
 ]
 project_list = [
     'url',
