@@ -109,25 +109,31 @@ def download_media(full_url, token, uin):
     return resp.content
 
 
-def unlock_media(aeskey, media):
-    """AES-ECB 解密多媒体数据并保存为图片文件 (Edited by DeepSeek TUI)
-    aeskey: hex 字符串, 32 个字符, 对应 16 字节 AES-128 密钥
+def unlock_media(aeskey, media, ext='jpg'):
+    """AES-ECB 解密多媒体数据并返回 base64 (Edited by DeepSeek TUI)
+    aeskey: hex 字符串(32字符,16字节密钥) 或 base64(解码后是 hex 字符串)
     media:  bytes, CDN 下载的加密数据
-    返回:   保存的文件名, 解密失败时返回 None"""
+    ext:    文件扩展名(仅用于日志,默认 jpg)
+    返回:   base64 编码的解密数据, 失败返回 None"""
     if media is None:
         log('解密失败: 媒体数据为空', 'Warn')
         return None
     log('原始key:' + aeskey)
     log('开始解码多媒体文件')
     try:
-        key = bytes.fromhex(aeskey)  # aeskey 是 hex 串, 非 base64 (Edited by DeepSeek TUI)
-    except (ValueError, Exception) as e:
-        log(f'密钥解码失败: {e}', 'Warn')
-        return None
+        key = bytes.fromhex(aeskey)
+    except ValueError:
+        try:
+            key_hex = base64.b64decode(aeskey).decode('ascii')
+            key = bytes.fromhex(key_hex)
+            log('密钥为 base64 编码 hex')
+        except Exception as e:
+            log(f'密钥解码失败: {e}', 'Warn')
+            return None
     log(f'AES密钥长度: {len(key)} bytes')
     cipher = AES.new(key, AES.MODE_ECB)
     unlocked = cipher.decrypt(media)
-    log(f'解密后数据长度: {len(unlocked)} bytes')
+    log(f'{ext} 解密后数据长度: {len(unlocked)} bytes')
 
     # PKCS7 unpad 验证 (Edited by DeepSeek TUI)
     ful_len = unlocked[-1]
@@ -140,10 +146,6 @@ def unlock_media(aeskey, media):
 
     data = unlocked[:-ful_len]
     log(f'去除padding后数据长度: {len(data)} bytes')
-    # filename = f'get_image_{int(time.time())}.jpg'
-    # with open(filename, 'wb') as f:
-    #     f.write(data)
-    # log(f'图片已保存: {filename}')
     return base64.b64encode(data).decode('utf-8')
 
 
@@ -184,14 +186,22 @@ def fetch_one_message(token, uin, client_id, config_dict, base_url):
     # 文本消息
     if msg_type == 1:
         msg = body['msgs'][0]['item_list'][0]['text_item']['text']
-    # 图片消息处理
-    elif msg_type == 2:
-        aeskey = body['msgs'][0]['item_list'][0]['image_item']['aeskey']  # hex 串 (Edited by DeepSeek TUI)
-        media = download_media(
-            body['msgs'][0]['item_list'][0]['image_item']['media']['full_url'],
-            token, uin
-        )
-        msg = unlock_media(aeskey, media)
+    # 图片/视频消息处理 (Edited by DeepSeek TUI)
+    elif msg_type in [2,5]:
+        if msg_type == 2:
+            aeskey = body['msgs'][0]['item_list'][0]['image_item']['aeskey']
+            url = body['msgs'][0]['item_list'][0]['image_item']['media']['full_url']
+            media = download_media(url, token, uin)
+            msg = unlock_media(aeskey, media, ext='jpg')
+        elif msg_type == 5:
+            aeskey = body['msgs'][0]['item_list'][0]['video_item']['media']['aes_key']
+            url = body['msgs'][0]['item_list'][0]['video_item']['media']['full_url']
+            if not body['msgs'][0]['item_list'][0]['video_item'].get('media'):
+                log('视频媒体数据为空', 'Warn')
+                msg = ''
+            else:
+                media = download_media(url, token, uin)
+                msg = unlock_media(aeskey, media, ext='mp4')
     else:
         msg = ''
         log(f'未知消息类型: {msg_type}', 'Warn')
@@ -389,6 +399,9 @@ def wechat_claw():
         elif msg_type == 2:
             log('处理图片消息...')
             result, ms = reply({'type': 2, 'msg': msg})
+        elif msg_type == 5:
+            log('处理视频消息...')
+            result, ms = reply({'type': 5, 'msg': msg})
         else:
             log('不支持的格式!', 'Warn')
             return 1

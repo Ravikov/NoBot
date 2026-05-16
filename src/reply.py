@@ -14,8 +14,8 @@ def reply(mes):
     # 判断消息类型
     if mes['type'] == 1:
         msg = mes['msg']
-    elif mes['type'] == 2:
-        image = mes['msg']
+    elif mes['type'] in [2,5]:
+        media = mes['msg']
     else:
         log('消息为空')
         return {'type': 2, 'msg': ['消息异常']}, 0
@@ -61,12 +61,16 @@ def reply(mes):
                     return {'type': 1, 'msg': ['未知的指令']}, 0
         else:
             result,state,ms,orgin_result = text(msg)
-    elif mes['type'] == 2:
-        log('收到图片,调用模型理解')
-        result,state,ms,orgin_result = multimodal('描述本张图片,忽略水印内容,除非用户要求',image)
-        image_dscrb = result
-        log(f'图片描述:{image_dscrb}')
-        result,state,ms,orgin_result = text(f'<图片消息(由多模态AI描述)>{result}')
+    elif mes['type'] in [2,5]:
+        if mes['type'] == 2:
+            mes_type = '图片'
+        elif mes['type'] == 5:
+            mes_type = '视频'
+        log(f'收到{mes_type},调用模型理解')
+        result,state,ms,orgin_result = multimodal(mes['type'],media)
+        media_dscrb = result
+        log(f'{mes_type}描述:{media_dscrb}')
+        result,state,ms,orgin_result = text(f'<{mes_type}消息(由多模态AI描述)>{result}')
 
     log('状态码审查...')
     log(str(orgin_result))
@@ -106,8 +110,8 @@ def reply(mes):
 
         log('写入记忆...')
         history = load_history()
-        if mes['type'] == 2:
-            msg = f'<一张图片(描述由AI生成)>{image_dscrb}'
+        if mes['type'] in [2,5]:
+            msg = f'<{mes_type}(描述由AI生成)>{media_dscrb}'
         history['history'].append({"role": "user", "content": f"[发送本条消息的时间:{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}]"+msg})
         # 将列表合并为字符串
         txt = ''

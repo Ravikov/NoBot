@@ -114,18 +114,19 @@ def search_api(mes):
     return result,state,ms,orgin_result
 
 # 多模态理解模型
-def multimodal(mes,image):
+def multimodal(tpe,media):
+    if tpe == 2:
+        msg = '描述本张图片,忽略水印内容,除非用户要求'
+        tpe = {'type':'image_url','image_url':{'url':f'data:image/jpeg;base64,{media}'}}
+    elif tpe == 5:
+        msg = '描述本条视频的内容,按照不换行的json格式标明内容时间位置及对应画面,重要部分请详细描述'
+        tpe = {'type':'video_url','video_url':{'url':f'data:video/mp4;base64,{media}'}}
     messages = [
     {
         'role':'user',
         'content':[
-            {'type':'text','text':mes},
-            {
-                'type':'image_url',
-                'image_url':{
-                    'url':f'data:image/jpeg;base64,{image}'
-                }
-            }
+            {'type':'text','text':msg},
+            tpe
         ]
     }
     ]
