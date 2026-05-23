@@ -168,7 +168,7 @@ def fetch_one_message(token, uin, client_id, config_dict, base_url,timeout=35):
                 'base_info': {"channel_version": "2.0.0"}
             }
             resp = requests.post(url=url, headers=headers, json=data, timeout=timeout)
-            log(resp.text)
+            # log(resp.text)
             if resp.json().get('msgs'):
                 state = resp.status_code
                 body = resp.json()
