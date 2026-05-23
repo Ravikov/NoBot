@@ -9,17 +9,31 @@ def reply(mes):
     处理消息并生成回复
     返回: ({'type': int, 'msg': list}, ms)
       type=1: 正常文本回复
-      type=2: 错误消息
+      type=0: 错误消息
     """
     # 判断消息类型
     if mes['type'] == 1:
         msg = mes['msg']
-    elif mes['type'] in [2,5]:
+    elif mes['type'] in [2,3,5]:
         media = mes['msg']
+    elif mes['type'] == 9:
+        msg = mes['msg']
+        media = mes['media']
     else:
-        log('消息为空')
-        return {'type': 2, 'msg': ['消息异常']}, 0
+        log('消息类型异常')
+        return {'type': 0, 'msg': ['消息异常']}, 0
         
+    def txt_wash(text,wash = config['txt_wash']):
+        # 输出清洗
+        text = ''
+        for i in result:
+            if i in wash:
+                pass
+            elif i == '，':
+                text = text+' '
+            else:
+                text = text+i
+        return text
     def text(msg):
         if config['or_search']:
             log('调用辅助模型判断联网功能...')
@@ -39,7 +53,14 @@ def reply(mes):
             return fst_llm(msg)
         else:
             log('辅助模型输出错误')
-            return {'type': 2, 'msg': ['辅助模型判断异常']}, 0
+            return {'type': 0, 'msg': ['辅助模型判断异常']}, 0
+        
+    def media_reply(tpe,media):
+        result,state,ms,orgin_result = multimodal(tpe,media)
+        media_dscrb = result
+        media_dscrb_log = txt_wash(media_dscrb,wash=["。","，","！","?","\n"])
+        log(f'{mes_type_desc}描述:{media_dscrb_log}')
+        return media_dscrb
 
     if mes['type'] == 1:
         if msg[0] == '/':
@@ -63,28 +84,31 @@ def reply(mes):
             result,state,ms,orgin_result = text(msg)
     elif mes['type'] in [2,5]:
         if mes['type'] == 2:
-            mes_type = '图片'
+            mes_type_desc = '图片'
         elif mes['type'] == 5:
-            mes_type = '视频'
-        log(f'收到{mes_type},调用模型理解')
-        result,state,ms,orgin_result = multimodal(mes['type'],media)
-        media_dscrb = result
-        log(f'{mes_type}描述:{media_dscrb}')
-        result,state,ms,orgin_result = text(f'<{mes_type}消息(由多模态AI描述)>{result}')
+            mes_type_desc = '视频'
+        log(f'收到{mes_type_desc},调用模型理解')
+        media_dscrb= media_reply(mes['type'],mes['media'])
+        result,state,ms,orgin_result = text(f'<{mes_type_desc}消息(由多模态AI描述)>{media_dscrb}')
+    elif mes['type'] == 9:
+        log('收到消息列表,调用模型处理...')
+        n_media = 1
+        for m in mes['media']:
+            if m['type'] == 2:
+                mes_type_desc = '图片'
+            elif m['type'] == 5:
+                mes_type_desc = '视频'
+            log(f'处理{mes_type_desc}消息{n_media}...')
+            media_dscrb = media_reply(m['type'],m['media'])
+            msg[msg.index(f'<{mes_type_desc}消息{n_media}>')] = f'<{mes_type_desc}消息{n_media}(由多模态AI描述)>{media_dscrb}'
+            n_media += 1
+        msg = '#'.join(msg)
+        result,state,ms,orgin_result = text(str(msg))
 
     log('状态码审查...')
     log(str(orgin_result))
     if state == 200:
-        # 输出清洗
-        text = ''
-        for i in result:
-            if i in config['txt_wash']:
-                pass
-            elif i == '，':
-                text = text+' '
-            else:
-                text = text+i
-        result = text
+        result = txt_wash(result)
 
         # 拆分多段消息
         re = []
@@ -111,7 +135,7 @@ def reply(mes):
         log('写入记忆...')
         history = load_history()
         if mes['type'] in [2,5]:
-            msg = f'<{mes_type}(描述由AI生成)>{media_dscrb}'
+            msg = f'<{mes_type_desc}(描述由AI生成)>{media_dscrb}'
         history['history'].append({"role": "user", "content": f"[发送本条消息的时间:{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}]"+msg})
         # 将列表合并为字符串
         txt = ''
@@ -131,4 +155,4 @@ def reply(mes):
     
     else:
         log(f'状态码错误 {state}','Warn')
-        return {'type': 2, 'msg': [f'api错误: {state}']}, 0
+        return {'type': 0, 'msg': [f'api错误: {state}']}, 0

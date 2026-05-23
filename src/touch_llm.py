@@ -91,7 +91,7 @@ def get_time():
 def fst_llm(question):
     # 读取记忆并拼接message
     history = load_history()
-    messages = [{"role": "system", "content": role_prompt}]+[{"role": "system", "content": '必须使用#符号对你的回答进行分段(仅在两段交界处),段数不限,不允许出现换行,不允许出现动作描述'}]+history.get('history')+history.get('memory')+get_time()+[{"role": "user", "content": question}]
+    messages = [{"role": "system", "content": role_prompt}]+[{"role": "system", "content": '回答长度稍长时必须使用#符号对你的回答进行分段(仅在两段交界处)除非该场景下长文段对话体验更好,段数不限,不允许出现换行,不允许出现动作描述'}]+history.get('history')+history.get('memory')+get_time()+[{"role": "user", "content": question}]
     result,state,ms,orgin_result = get_re(messages,config['API']['key'],config['API']['url'],config['API']['name'],config['temperature'],config['max_tokens'])
     return result,state,ms,orgin_result
 
@@ -107,7 +107,7 @@ def sec_llm(tem,mes):
 # 联网搜索模型
 def search_api(mes):
     history = load_history()
-    messages = [{"role": "system", "content": role_prompt}]+[{"role": "system", "content": '必须使用#符号对你的回答进行分段(仅在两段交界处),段数不限,不允许出现换行,不允许出现动作描述'}]+history.get('history',[])+history.get('memory',[])+get_time()+[{"role": "user", "content": mes}]
+    messages = [{"role": "system", "content": role_prompt}]+[{"role": "system", "content": '回答长度稍长时必须使用#符号对你的回答进行分段(仅在两段交界处)除非该场景下长文段对话体验更好,段数不限,不允许出现换行,不允许出现动作描述'}]+history.get('history',[])+history.get('memory',[])+get_time()+[{"role": "user", "content": mes}]
     result,state,ms,orgin_result = get_re(messages,config['searchAPI']['key'],config['searchAPI']['url'],config['searchAPI']['name'],config['temperature'],config['max_tokens'],True)
     log('联网搜索模型完成调用')
     

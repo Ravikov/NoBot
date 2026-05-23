@@ -11,6 +11,7 @@ from Crypto.Cipher import AES
 from debug.log import log
 from src.reply import reply
 from src.common import *
+from src.touch_llm import sec_llm
 
 
 # ========== 模块级工具函数（从原 wechat_claw() 体内提级）==========
@@ -151,7 +152,7 @@ def unlock_media(aeskey, media, ext='jpg'):
 
 # ========== 消息收发 ==========
 
-def fetch_one_message(token, uin, client_id, config_dict, base_url):
+def fetch_one_message(token, uin, client_id, config_dict, base_url,timeout=35):
     """长轮询获取一条消息
     返回: (msg_text, msg_type, to_user, context_token) 或 (None, None, None, None)"""
     headers = make_auth_headers(token, uin)
@@ -166,17 +167,17 @@ def fetch_one_message(token, uin, client_id, config_dict, base_url):
                 'client_id': client_id,
                 'base_info': {"channel_version": "2.0.0"}
             }
-            resp = requests.post(url=url, headers=headers, json=data)
-            # log(resp.text)
+            resp = requests.post(url=url, headers=headers, json=data, timeout=timeout)
+            log(resp.text)
             if resp.json().get('msgs'):
                 state = resp.status_code
                 body = resp.json()
-                # 更新游标
-                config_dict['cursor'] = body.get('get_updates_buf', '')
-                save_clawbot_config(config_dict)
-                break
+            # 更新游标
+            config_dict['cursor'] = body.get('get_updates_buf')
+            save_clawbot_config(config_dict)
+            break
         except requests.exceptions.ReadTimeout:
-            pass
+            return None, None, None, None
 
     if state != 200:
         log(f'状态码错误: {state}')
@@ -269,6 +270,7 @@ def send_reply_messages(result, to_user, context_token, config_dict):
                     'base_info': {"channel_version": "2.0.0"}
                 }
             }
+            # log(str(data))
             log(f'发送第{n}条消息: {msg}')
             resp = requests.post(
                 f'{base_url}/ilink/bot/sendmessage',
@@ -392,7 +394,7 @@ def wechat_claw():
         return config_dict['token']
 
     # ---- 消息处理 & 回复 ----
-    def handle_and_reply(msg, msg_type, to_user, context_token):
+    def handle_and_reply(msg, msg_type, to_user, context_token, media=None):
         if msg_type == 1:
             log('生成回复...')
             result, ms = reply({'type': 1, 'msg': msg})
@@ -402,6 +404,9 @@ def wechat_claw():
         elif msg_type == 5:
             log('处理视频消息...')
             result, ms = reply({'type': 5, 'msg': msg})
+        elif msg_type == 9:
+            log('处理队列消息...')
+            result,ms = reply({'type': 9, 'msg': msg, 'media': media})
         else:
             log('不支持的格式!', 'Warn')
             return 1
@@ -413,12 +418,87 @@ def wechat_claw():
     # ---- 主循环 ----
     def loop_run():
         token = token_check()
+        msg_list = []
+        history = load_history()
+        media = []
+        n_media = 1
+        timeout = 35
         while True:
+            n = 0
+            TO = config_dict['userid']
             msg, msg_type, to_user, context_token = fetch_one_message(
-                token, UIN, CLIENT_ID, config_dict, BASE_URL
+                token, UIN, CLIENT_ID, config_dict, BASE_URL, timeout=timeout
             )
             if msg_type == 1:
                 log(f'消息监听get: {msg}, 类型: {msg_type}')
-            handle_and_reply(msg, msg_type, to_user, context_token)
+                msg_list.append(msg)
+                if msg[0] == '/':
+                    msg_list = [msg]
+                    msg = None
+            if msg_type in [2,5]:
+                if msg_type == 2:
+                    msg_type_desc = '图片'
+                elif msg_type == 5:
+                    msg_type_desc = '视频'
+                log(f'消息监听get: <{msg_type_desc}消息>')
+                msg_list.append(f'<{msg_type_desc}消息{n_media}>')
+                n_media += 1
+                media.append({'type': msg_type, 'media': msg})
+                msg = f'<{msg_type_desc}消息>'
+            if msg:
+                log('调用模型判断等待...')
+                waitime = sec_llm(
+                    0.8,
+                    [{
+                        'role':'system',
+                        'content':"""判断本条消息需要等待下一条输入的时间(1~50),无论如何都要给以等待时间,
+                                    仅回复整数,不能包含任何其他内容,你需要推测用户行为来判断等待时间,例如拍摄照片要多等一会，
+                                    如:用户输入了"我拍了一张照片",你可以判断用户可能在拍照并等待照片上传,
+                                    这时你可以回复几十秒来让程序多等待一会(一般大于30),照片上传完成后再继续处理消息.
+                                    用户输入了'我在想一个问题',你可以判断用户可能在思考,
+                                    这时你也可以让程序多等待一会(建议大于20)再处理消息.
+                                    用户输入'等一下','稍等','等等'这一类时,也要稍微增加等待时间(建议5~15)来提升用户体验.
+                                    其他诸如'对了','我突然想起来',''我还有件事'等可能一切引发用户连续输入的消息,适当增加等待时间来提升用户体验.
+                                    禁止回复0和负数,要根据用户的行为来判断合理的等待时间,
+                                    如果用户某条消息需要等待他发下一条,你回复了1或者2,程序就会马上处理消息,这会导致用户还没想好就被打断,
+                                    但是过长的等待又会造成用户干等,体验下降,所以多数一般性问题建议在5~15为最佳,
+                                    所以请用合理的等待时间提升用户体验.
+                                    不要太小也不要太大,合理判断!!!"""
+                    }]+
+                    [{
+                        'role':'system',
+                        'content':f'<过往消息列表>{(msg_list)}<本条消息内容>{msg}'
+                    }]+
+                    history['history']+
+                    history['memory']+
+                    [{
+                        'role':'user',
+                        'content':f''
+                    }]
+                )
+                log(f'判断结果: {waitime}')
+                try:
+                    waitime = int(waitime)
+                    log(f'等待{waitime}秒')
+                except:
+                    log('返回有误')
+                    waitime = 0
+                timeout = config['wait'] + waitime
+                log(f'设置下一轮轮询超时时间为{timeout}秒')
+                n += 1
+            else:
+                log(str(msg_list))
+                if not msg_list == []:
+                    log(f'提交消息接收,共{n}条')
+                    if len(msg_list) == 1 and media == []:
+                        msg = msg_list[0] # 单条文本消息
+                        msg_type = 1
+                    elif len(msg_list) == 1 and media != []:
+                        msg_type = media[0]['type'] # 单条媒体消息
+                    else:
+                        msg = msg_list
+                        msg_type = 9 # 队列消息
+                    handle_and_reply(msg, msg_type, TO, context_token, media=media)
+                    timeout = 35
 
     loop_run()
