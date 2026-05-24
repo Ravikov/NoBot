@@ -499,6 +499,8 @@ def wechat_claw():
                         msg = msg_list
                         msg_type = 9 # 队列消息
                     handle_and_reply(msg, msg_type, TO, context_token, media=media)
+                    msg_list = []
+                    media = []
                     timeout = 35
 
     loop_run()

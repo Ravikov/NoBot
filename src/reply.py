@@ -25,15 +25,15 @@ def reply(mes):
         
     def txt_wash(text,wash = config['txt_wash']):
         # 输出清洗
-        text = ''
-        for i in result:
+        t = ''
+        for i in text:
             if i in wash:
                 pass
             elif i == '，':
-                text = text+' '
+                t = t+' '
             else:
-                text = text+i
-        return text
+                t = t+i
+        return t
     def text(msg):
         if config['or_search']:
             log('调用辅助模型判断联网功能...')
@@ -106,7 +106,7 @@ def reply(mes):
         result,state,ms,orgin_result = text(str(msg))
 
     log('状态码审查...')
-    log(str(orgin_result))
+    # log(str(orgin_result))
     if state == 200:
         result = txt_wash(result)
 
