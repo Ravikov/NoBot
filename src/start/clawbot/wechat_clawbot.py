@@ -171,11 +171,11 @@ def fetch_one_message(token, uin, client_id, config_dict, base_url,timeout=35):
             # log(resp.text)
             if resp.json().get('msgs'):
                 state = resp.status_code
-            body = resp.json()
-            # 更新游标
-            config_dict['cursor'] = body.get('get_updates_buf')
-            save_clawbot_config(config_dict)
-            break
+                body = resp.json()
+                # 更新游标
+                config_dict['cursor'] = body.get('get_updates_buf')
+                save_clawbot_config(config_dict)
+                break
         except requests.exceptions.ReadTimeout:
             return None, None, None, None
 
