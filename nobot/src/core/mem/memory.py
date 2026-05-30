@@ -1,8 +1,9 @@
 from nobot.src.core.get_reply.touch_llm import sec_llm
-from nobot.src.common import load_history,save_history
+from nobot.src.common import *
 from debug.log import log
 
 def set_memory():
+    config = load_config()
     mem = load_history()
     memory = sec_llm(
         0,

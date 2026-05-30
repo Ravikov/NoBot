@@ -12,6 +12,8 @@ import shutil
 from .common import *
 from debug.log import log
 
+config = load_config()
+
 def set_llm(llm,project,or_search):
     if llm == '联网模型':
         if not or_search:
