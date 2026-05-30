@@ -1,5 +1,5 @@
-from src.touch_llm import sec_llm
-from src.common import config,load_history,save_history
+from nobot.src.core.get_reply.touch_llm import sec_llm
+from nobot.src.common import load_history,save_history
 from debug.log import log
 
 def set_memory():
@@ -22,4 +22,4 @@ def set_memory():
         t = '总结记忆完毕'
         log(t)
         t = [t,]
-        return t,0
+        return {'type': 1, 'msg': t, 'delay': 0}

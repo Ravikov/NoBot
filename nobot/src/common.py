@@ -1,23 +1,27 @@
 import json
 import pathlib
+from debug.log import *
 
 # 配置文件全局路径
 ROOT = pathlib.Path(__file__).parent.parent
+log(f'工作目录 {ROOT}')
 CONFIG_FILE = ROOT / 'config' / 'config.json'
-# 配置（只读一次）
-try:
+# 配置
+def load_config():
     with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-        config = json.load(f)
+        return json.load(f)
+try:
+    a = load_config() # a为代替config的变量
 except FileNotFoundError:
-    config = {'prompt_file':'role_prompt'}
+    a = {'prompt_file':'role_prompt'}
 
-prompt_file = config['prompt_file']+'.txt'
+prompt_file = a['prompt_file']+'.md'
 PROMPT_FILE = ROOT / 'config' / prompt_file
 CONFIGBAK_FILE = ROOT / 'config' / 'config.json.bak'
-CLAWBOT_FILE = ROOT / 'config' / 'wechat_clawbot.json'
+CLAWBOT_FILE = ROOT.parent / 'IMchat' / 'clawbot' / 'config' / 'wechat_clawbot.json'
 MEMORY_FILE = ROOT / 'memory' / 'memory.json'
-STATEJSON_FILE = ROOT / 'debug' / 'states.json'
-RESPONSEJSON_FILE = ROOT / 'debug' / 'response.json'
+STATEJSON_FILE = ROOT.parent / 'debug' / 'states.json'
+RESPONSEJSON_FILE = ROOT.parent / 'debug' / 'response.json'
 
 # 设置项列举
 llm_list = [

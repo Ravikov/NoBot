@@ -57,6 +57,7 @@ def set_mainllm(project):
 
 def set_config():
     try:
+        config = load_config()
         input('开始进行配置文件设置,请按要求输入配置内容,键入 N 或 直接Enter 表示此项保持不变,中途可以随时退出,按Enter继续')
         print('进行大模型API配置')
         or_search = input(f'是否启用联网搜索功能?(true或false,默认true,当前{config["or_search"]}): ')
@@ -81,7 +82,7 @@ def set_config():
         config['non_setup'] = False
         with open(CONFIG_FILE,'w',encoding='utf-8') as f:
             json.dump(config,f,ensure_ascii=False,indent=2)
-        print('角色提示词请写入config/role_prompt.txt文件')
+        print('角色提示词请写入config/soul.md文件')
         log('备份配置文件...')
         shutil.copy2(CONFIG_FILE,CONFIGBAK_FILE)
         log('备份完毕,Ctrl+C退出')

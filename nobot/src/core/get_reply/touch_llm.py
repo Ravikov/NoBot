@@ -1,19 +1,22 @@
 import requests
 import json
 import time
-from src.common import *
+from nobot.src.common import *
 from debug.log import log
 
 with open(PROMPT_FILE,"r",encoding="utf-8") as f:
     role_prompt = f.read()
 
+config = load_config()
+
 # api post函数
 def api_post(headers,data,url):
+    debug_log(f'API请求 URL: {url}, headers: {headers}, body: {data}')
     response = requests.post(
         url=url,
         headers=headers,
         json=data,
-        timeout=20  # 超时时间，防止卡死
+        timeout=30  # 超时时间，防止卡死
     )
     return response
 

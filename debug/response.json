@@ -1,0 +1,28 @@
+{
+  "id": "1799dd17-bb09-4adf-a021-2372acf0fbdd",
+  "object": "chat.completion",
+  "created": 1780142105,
+  "model": "deepseek-v4-flash",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "哈哈 懂了 胜利手势之后这是要来个续集#先前的天空是浓重戏剧感的橙红暮色 现在这张则是宁静温柔的暖调晚霞 从橙红渐变到淡紫 云彩像水平条纹铺开 特别有层次感#左边那栋现代风格的灰蓝色建筑 在暮色里显得冷冷清清 正好和右边暖色的天空形成对比 一冷一暖 特别有味道#远处山丘和树林的剪影被薄雾笼罩 让画面有了纵深感 右下角屋顶上那只小白鸟 又给这份静谧添了点儿生气 感觉整个人都跟着静下来了"
+      },
+      "logprobs": null,
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 101158,
+    "completion_tokens": 134,
+    "total_tokens": 101292,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 101158
+  },
+  "system_fingerprint": "fp_8b330d02d0_prod0820_fp8_kvcache_20260402"
+}

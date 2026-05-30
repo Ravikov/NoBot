@@ -1,6 +1,6 @@
 from pathlib import Path
 from debug.log import log
-from src.common import *
+from nobot.src.common import *
 import json
 
 def check():
@@ -34,7 +34,7 @@ def check():
         },
         "max_tokens": 1500,
         "temperature": 1.0,
-        "prompt_file":"role_prompt",
+        "prompt_file":"soul",
         "max_history_turns": 20,
         "save_turns": 10,
         "wait": 8,
@@ -47,7 +47,9 @@ def check():
         ],
         "or_time_feel": True,
         "or_search": True,
-        "non_setup": True
+        "non_setup": True,
+        "debug": False,
+        "llm_decide_wait": True
     }
 
     DEFAULT_WECHATCLAW = {
@@ -104,7 +106,7 @@ def check():
         CONFIGBAK_FILE,
         CLAWBOT_FILE,
         PROMPT_FILE,
-        ROOT/'debug'/'bot.log',
+        ROOT.parent / 'debug' / 'bot.log',
         RESPONSEJSON_FILE,
         STATEJSON_FILE,
         MEMORY_FILE

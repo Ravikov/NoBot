@@ -3,11 +3,7 @@
 # 执行前检查
 from debug.log import log
 from check import check
-O = 1
 fix_num = check()
-if fix_num != 0:
-    log('有文件被修复,需要重启主程序,请在程序自动退出后重新运行')
-    O = 0
 
 import time
 import threading
@@ -15,22 +11,23 @@ import sys
 import io
 import shutil
 import os
-from src.common import *
-from src.touch_llm import *
-from src.reply import reply
-from src.start.start_ways import *
-from src.start.clawbot.wechat_clawbot import *
-from src.guide import set_config
+from nobot.src.common import *
+from nobot.src.core.get_reply.touch_llm import *
+from nobot.src.core.get_reply.reply import reply
+from IMchat.etc.start_ways import *
+from IMchat.clawbot.wechat_clawbot import *
+from nobot.src.guide import set_config
 
 # 设置编码
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 # ==========<测试函数部分>==========
 def test(api,url=None,key=None,model=None):
+    config = load_config()
     if api == 0:
-        re = connect(key,url,model,[{'role':'user','content':'Just Answer 1'}])
+        re,status = connect(key,url,model,[{'role':'user','content':'Just Answer 1'}])
     else:
-        re =  connect(config[api]['key'],config[api]['url'],config[api]['name'],[{'role':'user','content':'Just Answer 1'}])
+        re,status =  connect([{'role':'user','content':'Just Answer 1'}],config[api]['key'],config[api]['url'],config[api]['name'])
     if re is not None:  # connect 失败时返回 None (Edited by DeepSeek TUI)
         log('测试返回'+re.text)
         re = re.json()
@@ -45,6 +42,7 @@ def test(api,url=None,key=None,model=None):
 # ==========<程序启动部分>==========
 # 启动函数
 def run_bot():
+    config = load_config()
     if __name__ == '__main__':
         log('程序启动')
         time.sleep(1)
@@ -117,8 +115,8 @@ def run_bot():
                     try:
                         while 1:
                             question = input("请输入问题：")
-                            result,ms = reply({'type': 1,'msg':question})
-                            print(f'\n请求成功, 返回结果：\n\n{result}\n\n延迟{ms}s')
+                            result = reply({'type': 1,'msg':question})
+                            print(f'\n请求成功, 返回结果：\n\n{result}\n\n延迟{result["delay"]}s')
                             time.sleep(0.5)
                     except EOFError:
                         print('\n')
@@ -128,7 +126,9 @@ def run_bot():
                 threading.Thread(target=wechat_bot,daemon=True).start()
             case '4':
                 log('Wechat Claw Bot启动...')
-                threading.Thread(target=wechat_claw,daemon=True).start()
+                debug_log('尝试创建 WechatClawbot 对象')
+                wechat_clawbot = WechatClawbot()
+                threading.Thread(target=wechat_clawbot.wechat_claw,daemon=True).start()
 
             case 'set':
                 threading.Thread(target=set_config,daemon=True).start()
@@ -140,7 +140,7 @@ def run_bot():
                 log('加载配置文件成功!')
             case 'del':
                 if input('您确定要删除过往[所有]日志吗? [Y/n]: ') in ['Y','y']:
-                    os.remove(ROOT/'debug'/'bot.log')
+                    os.remove(ROOT.parent/'debug'/'bot.log')
                     log('过往日志清理完毕')
                 else:
                     log('取消清理')
@@ -150,15 +150,12 @@ def run_bot():
     
     return 0
 
-if O:
-    try:
-        ender = run_bot()
-        while True:
-            time.sleep(2)
-    except KeyboardInterrupt:
-        log('收到终止指令,2秒后退出...')
+try:
+    ender = run_bot()
+    while True:
         time.sleep(2)
-        log("程序优雅退出~")
-else:
-    ender = 'r'
+except KeyboardInterrupt:
+    log('收到终止指令,2秒后退出...')
+    time.sleep(2)
+    log("程序优雅退出~")
 log(f'程序结束,结束码: {ender}')

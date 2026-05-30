@@ -7,8 +7,8 @@
 # import websocket
 from flask import Flask,request
 from debug.log import log
-from src.reply import reply
-from src.common import *
+from nobot.src.core.get_reply.reply import reply
+from nobot.src.common import *
 
 
 # ==========<各种启动方式>==========
