@@ -150,6 +150,7 @@ def run_bot():
     
     return 0
 
+ender = None
 try:
     ender = run_bot()
     while True:
