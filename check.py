@@ -89,7 +89,8 @@ def check():
     # 检查目录完整性
     filedirs = [
         ROOT/'config',
-        ROOT/'memory'
+        ROOT/'memory',
+        ROOT.parent / 'IMchat' / 'clawbot' / 'config',
     ]
     for d in filedirs:
         log(f'检查{d}目录是否存在...')
