@@ -13,7 +13,7 @@ def load_config():
 try:
     a = load_config() # a为代替config的变量
 except FileNotFoundError:
-    a = {'prompt_file':'role_prompt'}
+    a = {'prompt_file':'soul'}
 
 prompt_file = a['prompt_file']+'.md'
 PROMPT_FILE = ROOT / 'config' / prompt_file

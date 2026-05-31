@@ -4,81 +4,123 @@
 
 ## 一个轻量的简易AI聊天机器人
 
-本项目基于 Python 开发，利用 `requests` 库调用 API 接口而非使用 OpenAI 的 SDK（其实是因为我是新手不会整）。
+本项目基于 Python 开发，利用 `requests` 库调用 API 接口而非使用 OpenAI 的 SDK。
 
-这个项目是我在一边学习的过程中一步一步开发出来的，只能说很多东西也还只是一知半解。如果有善心的大佬看到了我的仓库，欢迎提出 issues。
-
-目前配置文件的配置一般通过命令行引导实现,往后会尝试开发 WebUI。
+这是我第一个正式的编程项目，边学边写。如果有些地方做得不够好，恳请您不要介意。如果能有人指点一二，感激不尽！
 
 ## 快速开始
-**该项目基于Python开发,运行源码请提前安装Python3.10及以上版本**
 
-- 建议使用源码启动,您可以在releases里下载最新的源码压缩包并解压,亦可使用git命令如下:
-  ```cmd
-  git clone https://github.com/Ravikov/NoBot.git
-  ```
-- 获取源码后进入项目根目录(就是有个main.py目录),右键文件夹空白处在终端中打开,输入`python -u main.py`即可启动
+**请确保已安装 Python 3.10 或更高版本。**
 
-### 配置文件
-- 首次启动程序会自动进入配置引导,按照指示分别输入'主模型','辅助模型','联网模型'的url,APIkey,以及模型name(名称)
-- API信息配置完毕后会提示配置一些其它杂项,不想整全默认就好
-- *配置结束后如果需要添加提示词,请在'config/role_prompt.txt'中写入角色提示词*
+```bash
+git clone https://github.com/Ravikov/NoBot.git
+cd NoBot
+python -m venv .venv          # 创建虚拟环境（推荐）
+.venv\Scripts\pip install -r requirements.txt   # Windows
+# 或
+.venv/bin/pip install -r requirements.txt       # Linux/macOS
+python main.py
+```
 
-### 正式使用
-- 配置结束后,可以Ctrl+C退出程序(程序运行到任何阶段都可以Ctrl+C退出),然后重启
-- 重启后会进入运行方式引导,根据你的需要选择运行方式输入其编号并回车,一般常规运行方式建议大家选择微信ClawBot启动
-- 首次启动ClawBot会自动获取二维码,用微信扫码登录即可,待命令行提示"长轮询等待消息接收..."就可以开始发消息聊天了
-- *由于ilinkAPI响应有点延迟,所以回复速度会比较慢,以后会尝试优化,但效果一定没法做到太好*
-- **目前已经支持图片消息的接收和本地保存,但暂时还没有接入多模态视觉回复**,图片会以 `get_image_时间戳.jpg` 保存在项目根目录
+首次启动会自动进入配置引导，按提示输入各模型的 URL、API Key 和模型名称即可。
 
-## 使用说明
+### 快速启动脚本
 
-`config` 目录下有一些基本的配置文件（源码中没有该目录，为了防止提交泄露隐私）。
+- **Windows:** 双击 `Run.bat`
+- **Linux/macOS:** 终端运行 `./Run.sh`
 
-**拿到源码请先运行一次 `main.py`，程序会自动创建默认格式的配置文件。**
+### 配置说明
 
-### `config/`
+- 主模型、辅助模型、联网搜索模型、多模态理解模型均需配置
+- 角色提示词请写入 `nobot/config/soul.md`
+- 如果配置出现错误，可删除 `nobot/config/config.json` 后重新运行，程序会自动重建默认配置
 
-- `config.json` 里有一些关于模型的配置：
-  - `"API"`：主模型
-  - `"secAPI"`：辅助模型
-  - `"searchAPI"`：联网搜索模型（注意一定要填一个能联网的模型，否则效果会差强人意）
-  
-  其他乱七八糟的不想写了……`temperature` 什么的都是对主模型的设置。还有一些对辅助模型的提示词，一般建议不要更改，特别是 `"or_search_prompt"` 这一栏，**必须保证模型返回的只有 1 或 0**，如果给了别的……程序 boom！！！
+## 启动方式
 
-- `wechat_clawbot.json` 里是关于 iLink 接口的信息，这个**不需要**人为配置，最好不要更改。真改了出错了就删掉，下次启动程序会再创建一个默认格式的。
+程序启动后选择对应编号：
 
-- `role_prompt.txt` 是角色的提示词，直接写到这里面就行。
+| 编号 | 模式 | 说明 |
+|---|---|---|
+| 1 | Webhook | Flask 服务，用于对接第三方平台 |
+| 2 | 命令行 | 直接在终端输入问题 |
+| 3 | 微信个人号 | 暂不可用 |
+| 4 | 微信 ClawBot | ✅ 推荐，扫描二维码登录后自动收发消息 |
+| set | 配置引导 | 重新配置模型参数 |
+| save/load | 备份/恢复 | 备份或恢复配置文件 |
+| del | 清理日志 | 删除 `debug/bot.log` |
 
-### `debug/`
+## 项目结构
 
-这个目录下主要是一些调试需要用到的东西，普通用户就不用管啦。
+```
+NoBot/
+├── main.py                     # 程序入口
+├── Run.bat / Run.sh            # 快速启动脚本
+├── requirements.txt            # Python 依赖
+│
+├── message/                    # 消息协议层
+│   ├── msg.py                  # 基类 Message, ReplyIn, ReplyOut
+│   └── clawbot/
+│       └── wechatmsg.py        # WechatBotMessage 基类（继承 Message）
+│
+├── IMchat/                     # 微信 ClawBot 实现
+│   ├── clawbot/
+│   │   ├── wechat_clawbot.py   # 主控：登录、token校验、主循环
+│   │   ├── wechat_common.py    # 工具函数：配置读写、请求头、UIN
+│   │   ├── getmsg/             # 消息接收模块
+│   │   │   ├── getupdate.py    #   长轮询 API
+│   │   │   ├── handlemsg.py    #   消息路由与内容提取
+│   │   │   ├── mediagetter.py  #   多媒体下载与 AES 解密
+│   │   │   ├── waitimer.py     #   智能等待决策
+│   │   │   └── replymsg.py     #   调用回复引擎
+│   │   └── sendmsg/            # 消息发送模块
+│   │       ├── send.py         #   发送消息（分条发送）
+│   │       └── sendtyping.py   #   打字状态指示
+│   └── etc/
+│       └── start_ways.py       # 其他启动方式（webhook 等）
+│
+├── nobot/                      # 核心逻辑
+│   ├── common.py               # 全局配置路径、记忆读写
+│   ├── guide.py                # 命令行配置向导
+│   ├── config/                 # 配置文件目录
+│   │   ├── config.json         # API 配置
+│   │   ├── config.json.bak     # 备份
+│   │   ├── soul.md             # 角色提示词
+│   │   └── wechat_clawbot.json # 微信登录信息（自动生成）
+│   ├── memory/
+│   │   └── memory.json         # 对话历史与记忆
+│   └── src/
+│       └── core/
+│           ├── get_reply/
+│           │   ├── reply.py    # ReplyHandler: 消息路由与回复生成
+│           │   └── touch_llm.py # API 调用底层
+│           └── mem/
+│               └── memory.py   # 记忆总结压缩
+│
+├── debug/                      # 调试与日志
+│   ├── bot.log                 # 运行日志
+│   ├── states.json             # token 用量统计
+│   └── response.json           # 最近一次 API 原始响应
+│
+└── check.py                    # 启动前完整性检查
+```
 
-另外强调一下，`debug` 目录下有一个 `bot.log` 文件，平常终端显示的日志信息都会存到这里面。建议定时清理一下（直接删掉就好），防止磁盘占用太多。
+## 快捷指令
 
-### `memory/`
+在聊天中直接发送：
 
-这个目录下只有一个文件 `memory.json`，用来存储上下文历史和定期的记忆总结。如果你想清空记忆，可以直接删掉。
+- `/rememory` — 清除机器人记忆
+- `/memory` — 主动触发记忆总结
 
-### `src/`
+## 已支持功能
 
-这就不多解释了，各模块的源码。主要文件分工：
-
-- `touch_llm.py` — 调用大模型 API 的底层函数
-- `reply.py` — 消息路由，判断是普通对话还是快捷指令
-- `memory.py` — 记忆压缩，用辅助模型做对话总结
-- `common.py` — 全局路径和配置加载
-- `start/wechat_clawbot.py` — 微信 ClawBot 的登录、收消息、发消息全套逻辑
-- `start/start_ways.py` — 其他启动方式（webhook、命令行等）
-- `guide.py` — 命令行引导配置
-
-### 快捷指令
-
-目前支持的快捷指令只有两个，在聊天界面或者命令行直接发就能用：
-
-- `/rememory` - 清除记忆
-- `/memory` - 直接总结记忆
+- ✅ 文本消息收发
+- ✅ 图片消息接收 + AI 多模态理解
+- ✅ 视频消息接收（实验性）
+- ✅ 多条消息积累 + 智能等待
+- ✅ 长轮询实时接收
+- ✅ QR 码扫码登录
+- ❌ 图片/视频发送 — 待 ilink 协议确认后实现
 
 ## 结语
 
-这是我第一个正式项目(当然也是学习项目)。边学边写，哪里不会学哪里。所以如果一些方面做的不够好，恳请看到这句话的您不要介意。项目不好用，您可以不用，但我很希望能有人为我指点迷津！感激不尽！
+这是我第一个正式项目。如果你有建议或发现了 bug，欢迎提 Issue，感激不尽！

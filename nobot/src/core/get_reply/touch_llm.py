@@ -11,7 +11,7 @@ config = load_config()
 
 # api post函数
 def api_post(headers,data,url):
-    debug_log(f'API请求 URL: {url}, headers: {headers}, body: {data}')
+    debug_log(f'API请求 URL: {url}, body: {data}')
     response = requests.post(
         url=url,
         headers=headers,
@@ -50,10 +50,8 @@ def connect(messages=None,key=None,url=None,model=None,tem=0,max_tokens=2048,sea
         return None, response.status_code  # 返回 None 而非 1, 避免与有效返回值混淆 (Edited by DeepSeek TUI)
 
 # 调用函数
-def get_re(key,url,model,messages,tem=0,max_tokens=2048,search=False):
-    response,state = connect(key,url,model,messages,tem,max_tokens,search)
-
-    # log(response.text)
+def get_re(messages,key,url,model,tem=0,max_tokens=2048,search=False):
+    response,state = connect(messages=messages,key=key,url=url,model=model,tem=tem,max_tokens=max_tokens,search=search)
     # 将结果写入json文件
     if state == 200:
         orgin_result = response.json()

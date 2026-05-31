@@ -218,6 +218,8 @@ __marimo__/
 .streamlit/secrets.toml
 
 # 项目配置文件
+debug/response.json
+debug/states.json
 config
 memory
 test.py

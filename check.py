@@ -88,8 +88,8 @@ def check():
     N = 0
     # 检查目录完整性
     filedirs = [
-        'config',
-        'memory'
+        ROOT/'config',
+        ROOT/'memory'
     ]
     for d in filedirs:
         log(f'检查{d}目录是否存在...')

@@ -14,7 +14,7 @@ def set_memory():
     if memory is None:  # sec_llm 失败时返回 None (Edited by DeepSeek TUI)
         t = '记忆总结失败,请参考api错误码'
         log(t,'error')
-        return t,1
+        return {'type': 0, 'msg': [t], 'delay': 0}
     else:
         mem['history'] = mem['history'][-10:]
         mem['turns'] = 0
