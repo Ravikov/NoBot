@@ -5,6 +5,8 @@ from debug.log import *
 
 class GetUpdate(WechatBotMessage):
 
+    _poll_count = 0  # 类变量，所有实例共享轮询计数
+
     def __init__(self, timeout):
         super().__init__()
         self.body = None
@@ -16,15 +18,19 @@ class GetUpdate(WechatBotMessage):
         headers = make_auth_headers(self.token, self.uin)
         url = f'{self.baseurl}/ilink/bot/getupdates'
         state = 0  # 初始值, 防止未绑定
+
+        # 每 10 次轮询写一次普通日志，debug 模式每次都会写
+        GetUpdate._poll_count += 1
+        debug_log(f'长轮询: timeout={self.timeout}s')
+        if GetUpdate._poll_count % 10 == 1:
+            log(f'长轮询中, timeout={self.timeout}s')
         try:
             data = {
                 'get_updates_buf': self.cursor,
                 'client_id': self.client_id,
                 'base_info': {"channel_version": "2.0.0"}
             }
-            debug_log(f'长轮询: {self.baseurl}/ilink/bot/getupdates, timeout={self.timeout}s')
             resp = requests.post(url=url, headers=headers, json=data, timeout=self.timeout)
-            debug_log(resp.text)
             if resp.json().get('msgs'):
                 state = resp.status_code
                 self.body = resp.json()
