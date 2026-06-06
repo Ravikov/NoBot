@@ -1,29 +1,16 @@
-import qrcode
 import requests
-import time
+import qrcode
 import threading
 import queue
-import uuid
+from IMchat.clawbot.clawbot_common import *
 from debug.log import *
-from nobot.src.common import *
-from message.clawbot.wechatmsg import WechatBotMessage
-from IMchat.clawbot.wechat_common import *
-from IMchat.clawbot.getmsg.getupdate import GetUpdate
-from IMchat.clawbot.getmsg.handlemsg import Handle
-from IMchat.clawbot.sendmsg.send import Sender
-from IMchat.clawbot.getmsg.waitimer import Witimer
-from IMchat.clawbot.getmsg.replymsg import get_msg_reply
 
-class WechatClawbot:
+class ClawBotLogin:
 
     def __init__(self):
-        self.config    = load_clawbot_config()
-        self.uin       = random_wechat_uin()
-        self.baseurl   = 'https://ilinkai.weixin.qq.com'
-        self.token     = self.token_check()
-        self.client_id = self.config.get('clientid', str(uuid.uuid4()))
-
-        self.timeout   = 35
+        self.baseurl = 'https://ilinkai.weixin.qq.com'
+        self.uin = random_wechat_uin()
+        self.config = load_clawbot_config()
 
     def fetch_qr(self):
         """获取登录二维码，返回 (qr_code_str, 是否成功)"""
@@ -45,6 +32,7 @@ class WechatClawbot:
         if not qr:
             log(f'未获取到二维码: {data}')
             return None, False
+        
         qr_url = data.get('qrcode_img_content')
         print(f"请用微信扫码: {qr_url}")
         # 终端打印二维码
@@ -63,18 +51,9 @@ class WechatClawbot:
             debug_log(resp.text)
             if resp.status_code != 200:
                 print(f"轮询请求失败: {resp.status_code}")
-                return None
-            return resp.json()
-        except requests.exceptions.ConnectionError:
-            log('连接断开,重试...')
-            return None
         except requests.exceptions.ReadTimeout:
             log('等待...')
-            return None
-
-    # ========== 消息收发 ==========
-    # 由WechatIn类对象接收,WechatOut类对象发送
-
+        return resp.json()
 
     # qr
     def fst_log_in(self):
@@ -97,6 +76,7 @@ class WechatClawbot:
             )
             if state:
                 status = state.get('status')
+                log(f'状态检测: {status}')
                 if status == 'confirmed':
                     log('confirmed, 退出轮询...')
                     connection = state
@@ -108,7 +88,6 @@ class WechatClawbot:
                     qr = qr_queue.get()
                     th.join()
                     log('获取完毕')
-                log(f'状态检测: {status}')
 
         # 保存登录信息
         self.config['baseurl'] = connection.get('baseurl', self.baseurl)
@@ -122,7 +101,6 @@ class WechatClawbot:
     # ---- token 校验 ----
     def token_check(self):
         log('检查token可用性...')
-        self.config = load_clawbot_config()
         debug_log(f'当前token: {self.config.get("token", "")}')
         token = self.config.get('token', '')
         if not token:
@@ -161,54 +139,3 @@ class WechatClawbot:
             self.fst_log_in()
             log('登录完毕')
         return self.config['token']
-
-
-    # ========== 主入口 ==========
-
-    def wechat_claw(self):
-        
-        debug_log('创建启动对象')
-        log('开始运行...')
-        msgobj = WechatBotMessage() #消息对象 存储消息信息 消息提交处理后重建
-        waitimer = None
-        while True:
-            Updater = GetUpdate(self.timeout) #每次循环新建接收器并传入timeout
-            Updater.getupdates() #长轮询接收消息
-            msgobj.msgtext = Updater.msgtext
-
-            if msgobj.msgtext is None: #无消息
-                if msgobj.msglist == [] and msgobj.medialist == []:
-                    debug_log('轮询超时,下一次轮询...')
-                    continue
-            else: 
-                #有消息接收 → 提取内容 → 设定等待
-                fetcher = Handle(Updater, len(msgobj.msglist) + 1)
-                fetcher.fetch()
-                debug_log(vars(fetcher))
-                msgobj.msgtext  = fetcher.msgtext
-                msgobj.msgtype  = fetcher.msgtype
-                msgobj.media    = fetcher.media if fetcher.media is not None else msgobj.media
-                msgobj.msglist      += fetcher.msglist
-                msgobj.medialist     += fetcher.medialist
-                msgobj.context_token  = fetcher.context_token
-                msgobj.msgnum        += 1
-
-                waitimer = Witimer(msgobj, fetcher.process_now)
-                if waitimer.set_waitime():
-                    pass  # 命令类消息 → 不等待，直接处理
-                else:
-                    self.timeout = waitimer.timeout
-                    continue
-
-            # === 处理已积累的消息（超时提交 或 命令类直接处理）===
-            if waitimer is None:
-                continue
-            msgobj.msgtext = waitimer.msgtext
-            msgobj.msgtype = waitimer.msgtype
-            msgobj.media   = waitimer.media
-            replyout_obj   = get_msg_reply(msgobj)
-
-            sender = Sender(replyout_obj) #消息发送器
-            sender.send()
-            msgobj = WechatBotMessage()
-            self.timeout = 35

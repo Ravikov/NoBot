@@ -3,21 +3,23 @@ import requests
 # import io
 # from PIL import Image
 from Crypto.Cipher import AES
-from message.clawbot.wechatmsg import WechatBotMessage
+from nobot.src.common import retry
 from debug.log import *
-from IMchat.clawbot.wechat_common import make_auth_headers
+from IMchat.clawbot.clawbot_common import make_auth_headers
 
-class MediaGetter(WechatBotMessage):
+class MediaGetter():
 
-    def __init__(self, url, key, ext='jpg'):
+    def __init__(self, url, key, usrobj, ext='jpg'):
         super().__init__()
         self.media_url = url
         self.media_key = key
         self.ext = ext
+        self.token = usrobj.token
+        self.uin = usrobj.uin
 
     # 媒体消息处理
     def download_media(self):
-        """从 CDN 下载多媒体文件，返回二进制内容或 None (Edited by DeepSeek TUI)"""
+        """从 CDN 下载多媒体文件，返回二进制内容或 None """
         log('从cdn获取多媒体文件...')
         debug_log(f'CDN URL: {self.media_url}')
         resp = requests.get(url=self.media_url, headers=make_auth_headers(self.token, self.uin))
@@ -97,6 +99,7 @@ class MediaGetter(WechatBotMessage):
 
         self.media = base64.b64encode(data).decode('utf-8')
     
+    @retry
     def getter(self):
         self.download_media()
         self.unlock_media()

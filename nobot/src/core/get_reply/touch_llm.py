@@ -10,6 +10,7 @@ with open(PROMPT_FILE,"r",encoding="utf-8") as f:
 config = load_config()
 
 # api post函数
+@retry
 def api_post(headers,data,url):
     debug_log(f'API请求 URL: {url}, body: {data}')
     response = requests.post(

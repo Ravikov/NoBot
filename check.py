@@ -1,7 +1,10 @@
+import json
+import os
+from collections import deque # deque可以高效地读取日志末行
 from pathlib import Path
 from debug.log import log
 from nobot.src.common import *
-import json
+
 
 def check():
     log('执行check...')
@@ -58,7 +61,8 @@ def check():
     "botid": "",
     "userid": "",
     "cursor": "",
-    "clientid": ""
+    "clientid": "",
+    "name": "main"
     }
 
     DEFAULT_MEMORY = {
@@ -112,6 +116,7 @@ def check():
         STATEJSON_FILE,
         MEMORY_FILE
     ]
+
     def w_json(file_name,default):
         with open(file_name,'w',encoding='utf-8') as f:
             json.dump(default,f,ensure_ascii=False,indent=2)
@@ -135,9 +140,26 @@ def check():
                     w_json(file,DEFAULT_MEMORY)
         else:
             pass
+
+
+    # log大小检查
+    def log_check():
+        log('检查日志文件大小...')
+        size = os.path.getsize(ROOT.parent / 'debug' / 'bot.log')
+        log(f'当前日志文件大小: {size/(1024*1024):.2f} MB')
+        if size > 5*1024*1024:
+            log('日志文件过大,尝试清理...')
+            with open(ROOT.parent / 'debug' / 'bot.log','w',encoding='utf-8') as f:
+                final_lines = deque(f,maxlen=1000)
+                f.writelines(f,list(final_lines))
+            log('日志文件清理完毕')
+        else:
+            log('日志文件大小正常')
+
     log('校验配置文件完整性...')
     log('特别提醒: 如果发现某些配置文件读取时报错,尝试删除相应文件后重新运行程序!')
     for f in files:
         check_file(Path(f))
     log(f'校验完毕,修复{N}个文件')
+    log_check()
     return N

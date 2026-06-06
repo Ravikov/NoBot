@@ -15,7 +15,7 @@ from nobot.src.common import *
 from nobot.src.core.get_reply.touch_llm import *
 from nobot.src.core.get_reply.reply import reply
 from IMchat.etc.start_ways import *
-from IMchat.clawbot.wechat_clawbot import *
+from IMchat.clawbot.clawbot import *
 from nobot.src.guide import set_config
 
 # 设置编码
@@ -48,7 +48,7 @@ def run_bot():
         time.sleep(1)
         if config['non_setup']:
             log('首次启动,编辑配置文件...')
-            g = input('如果您的配置文件有备份,可以输入"Y"并回车来跳过索引[务必确定您有备份]: ')
+            g = input('如果您的配置文件有备份,可以输入"Y"并回车来跳过索引,否则直接回车[务必确定您有备份]: ')
             if g in ['Y','y']:
                 start_way = 'load'
             else:
@@ -69,7 +69,7 @@ def run_bot():
             try:
                 start_way = input('>>> ')
             except KeyboardInterrupt:
-                log('选择中断')
+                log('\n选择中断')
                 return 0
         
         match start_way:

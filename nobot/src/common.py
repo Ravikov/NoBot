@@ -18,7 +18,7 @@ except FileNotFoundError:
 prompt_file = a['prompt_file']+'.md'
 PROMPT_FILE = ROOT / 'config' / prompt_file
 CONFIGBAK_FILE = ROOT / 'config' / 'config.json.bak'
-CLAWBOT_FILE = ROOT.parent / 'IMchat' / 'clawbot' / 'config' / 'wechat_clawbot.json'
+CLAWBOT_FILE = ROOT.parent / 'IMchat' / 'clawbot' / 'config' / 'clawbot.json'
 MEMORY_FILE = ROOT / 'memory' / 'memory.json'
 STATEJSON_FILE = ROOT.parent / 'debug' / 'states.json'
 RESPONSEJSON_FILE = ROOT.parent / 'debug' / 'response.json'
@@ -52,3 +52,14 @@ def load_history():
 def save_history(history):
     with open(MEMORY_JSON_FILE, 'w', encoding='UTF-8') as f:
         json.dump(history, f, ensure_ascii=False, indent=2)
+
+# retry装饰器
+def retry(obj,trytime=3):
+    def wrapper(*args,**kwargs):
+        for i in range(trytime):
+            try:
+                return obj(*args,**kwargs)
+            except Exception as e:
+                log(f'执行{obj.__name__}发生错误: {e}, 正在重试...({i+1}/{trytime})','Error')
+        log(f'执行{obj.__name__}失败: 已达最大重试次数 {trytime}', 'Error')
+    return wrapper

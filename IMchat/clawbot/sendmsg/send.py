@@ -3,17 +3,20 @@ import time
 import uuid
 import requests
 from debug.log import *
-from IMchat.clawbot.wechat_common import make_auth_headers,random_wechat_uin
+from IMchat.clawbot.clawbot_common import make_auth_headers
 from .sendtyping import Typing
-from message.clawbot.wechatmsg import WechatBotMessage
+from message.clawbot.clawbotmsg import WechatBotMessage
 
-class Sender(WechatBotMessage):
+class Sender():
 
-    def __init__(self, msgobj):
-        super().__init__()
-        self.typing        = Typing(msgobj)
+    def __init__(self, msgobj, usrobj):
+        self.typing        = Typing(msgobj, usrobj)
+        self.userid        = usrobj.userid
+        self.baseurl       = usrobj.baseurl
+        self.token         = usrobj.token
+        self.uin           = usrobj.uin
+
         self.context_token = msgobj.context_token
-        
         self.msgtype       = msgobj.msgtype
         self.msgtext       = msgobj.msgtext
         self.media         = msgobj.media
@@ -21,7 +24,8 @@ class Sender(WechatBotMessage):
     def send(self): #发送消息
         """发送回复消息（分条发送)"""
 
-        self.typing.get_ticket()
+        log('获取ticket...')
+        self.typing.get_config()
         n = 1
         if self.msgtype == 1:
             log(f'回复类型: text, 总条数: {len(self.msgtext)}')
