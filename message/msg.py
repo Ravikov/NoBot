@@ -1,6 +1,6 @@
 from debug.log import log
 import time
-from nobot.src.core.get_reply.reply import reply
+from nobot.src.core.get_reply.reply import Reply
 
 # 消息类
 
@@ -16,7 +16,7 @@ class Message:
         self.msglist = [] #消息列表
         self.medialist = [] #多媒体列表
         self.msgtime = time.time() #消息时间戳
-        self.msgnum = 1 #消息数量
+        self.msgnum = 0 #消息数量
 
 # 子类 reply函数输出消息 传入reply返回的字典构造Message对象
 class ReplyOut(Message):
@@ -39,7 +39,6 @@ class ReplyIn(Message):
         super().__init__(msgobj.msgtype, msgobj.msgtext, fromusr=msgobj.fromusr, media=msgobj.media)
 
     def get_reply(self):
-        return ReplyOut(reply({'type': self.msgtype, 'msg': self.msgtext, 'media': self.media})) #返回回复消息对象
-
-
-
+        replyer = Reply({'type': self.msgtype, 'msg': self.msgtext, 'media': self.media})
+        replyer.reply()
+        return ReplyOut(replyer.llm_msg) #返回回复消息对象

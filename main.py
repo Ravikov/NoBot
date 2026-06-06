@@ -13,7 +13,7 @@ import shutil
 import os
 from nobot.src.common import *
 from nobot.src.core.get_reply.touch_llm import *
-from nobot.src.core.get_reply.reply import reply
+from nobot.src.core.get_reply.reply import Reply
 from IMchat.etc.start_ways import *
 from IMchat.clawbot.clawbot import *
 from nobot.src.guide import set_config
@@ -22,21 +22,21 @@ from nobot.src.guide import set_config
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 # ==========<测试函数部分>==========
-def test(api,url=None,key=None,model=None):
-    config = load_config()
-    if api == 0:
-        re,status = connect(key,url,model,[{'role':'user','content':'Just Answer 1'}])
-    else:
-        re,status =  connect([{'role':'user','content':'Just Answer 1'}],config[api]['key'],config[api]['url'],config[api]['name'])
-    if re is not None:  # connect 失败时返回 None (Edited by DeepSeek TUI)
-        log('测试返回'+re.text)
-        re = re.json()
-        if re["choices"][0]["message"]["content"] == '1':
-            log('模型测试通过')
-        else:
-            log('测试未通过','warn')
-    else:
-        log('出错,请检查状态码','error')
+# def test(api,url=None,key=None,model=None):
+#     config = load_config()
+#     if api == 0:
+#         re,status = connect(key,url,model,[{'role':'user','content':'Just Answer 1'}])
+#     else:
+#         re,status =  connect([{'role':'user','content':'Just Answer 1'}],config[api]['key'],config[api]['url'],config[api]['name'])
+#     if re is not None:  # connect 失败时返回 None (Edited by DeepSeek TUI)
+#         log('测试返回'+re.text)
+#         re = re.json()
+#         if re["choices"][0]["message"]["content"] == '1':
+#             log('模型测试通过')
+#         else:
+#             log('测试未通过','warn')
+#     else:
+#         log('出错,请检查状态码','error')
 
 
 # ==========<程序启动部分>==========
@@ -69,8 +69,8 @@ def run_bot():
             try:
                 start_way = input('>>> ')
             except KeyboardInterrupt:
-                log('\n选择中断')
-                return 0
+                log('选择中断')
+                raise KeyboardInterrupt
         
         match start_way:
             case '0':
@@ -115,7 +115,9 @@ def run_bot():
                     try:
                         while 1:
                             question = input("请输入问题：")
-                            result = reply({'type': 1,'msg':question})
+                            replyer = Reply({'type': 1,'msg':question})
+                            replyer.reply()
+                            result = replyer.llm_msg
                             print(f'\n请求成功, 返回结果：\n\n{result}\n\n延迟{result["delay"]}s')
                             time.sleep(0.5)
                     except EOFError:
@@ -150,13 +152,14 @@ def run_bot():
     
     return 0
 
-ender = None
-try:
-    ender = run_bot()
-    while True:
+if __name__ == '__main__':
+    ender = None
+    try:
+        ender = run_bot()
+        while True:
+            time.sleep(2)
+    except KeyboardInterrupt:
+        log('收到终止指令,2秒后退出...')
         time.sleep(2)
-except KeyboardInterrupt:
-    log('收到终止指令,2秒后退出...')
-    time.sleep(2)
-    log("程序优雅退出~")
-log(f'程序结束,结束码: {ender}')
+        log("程序优雅退出~")
+    log(f'程序结束,结束码: {ender}')

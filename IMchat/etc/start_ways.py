@@ -7,7 +7,7 @@
 # import websocket
 from flask import Flask,request
 from debug.log import log
-from nobot.src.core.get_reply.reply import reply
+from nobot.src.core.get_reply.reply import Reply
 from nobot.src.common import *
 
 

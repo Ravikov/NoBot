@@ -14,7 +14,7 @@ class WechatBotMessage(Message): # 微信bot消息基础格式 基本通讯协�
         # 运行期属性（父类 Message 已初始化 msgtype/msgtext/media/msglist/medialist）
         self.msgtime = None
         self.context_token = None
-        self.msgnum = 1
+        self.msgnum = 0
 
 # wechatbot用户信息
 class WechatBotUsr:

@@ -8,12 +8,13 @@ import traceback
 def log(msg, level="INFO"): #过长时写入完整信息 终端提示简略信息
     msg = str(msg)
     timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-    if len(msg) >= 300:
-        short_msg = msg[-200:]
+    if len(msg) >= 500:
+        short_msg = msg[-300:]
+        log_line  = msg[:500]+'......'+msg[-500:]
         short_line = f"[{timestamp}] [{level}] ...({len(msg)}chars){short_msg}"
     else:
         short_line = None
-    log_line = f"[{timestamp}] [{level}] {msg}"
+        log_line = f"[{timestamp}] [{level}] {msg}"
     with open("debug/bot.log", "a", encoding="utf-8") as f:
         f.write(log_line + "\n")
         f.flush()

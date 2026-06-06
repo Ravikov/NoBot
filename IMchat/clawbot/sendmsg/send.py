@@ -28,8 +28,9 @@ class Sender():
         self.typing.get_config()
         n = 1
         if self.msgtype == 1:
-            log(f'回复类型: text, 总条数: {len(self.msgtext)}')
-            for msg in self.msgtext:
+            msgs = self.msgtext if isinstance(self.msgtext, list) else [self.msgtext]
+            log(f'回复类型: text, 总条数: {len(msgs)}')
+            for msg in msgs:
                 if msg == ' ':
                     continue
                 threading.Thread(target=self.typing.send_typing).start()

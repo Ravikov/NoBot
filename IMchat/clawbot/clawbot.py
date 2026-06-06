@@ -43,7 +43,7 @@ class WechatClawbot:
             elif len(msgobj.msglist) == 1 and msgobj.medialist != []:
                 msgobj.msgtext = msgobj.msglist[0]
                 msgobj.msgtype = msgobj.medialist[0]['type'] # 单条媒体消息
-                msgobj.media   = msgobj.medialist[0]['media']
+                msgobj.media   = msgobj.medialist
 
             else:
                 msgobj.msgtext = msgobj.msglist
@@ -74,7 +74,7 @@ class WechatClawbot:
 
                 if handler.process_now:
                     log('命令类消息,立即处理...')
-                    process_now = handler.process_now
+                    process_now = True
                 else:
                     waitimer = Waitimer(msgobj)
                     waitimer.set_waitime()
@@ -100,6 +100,7 @@ class WechatClawbot:
                 debug_log('轮询超时,下一次轮询...')
                 debug_log('get_config维持链接...')
                 threading.Thread(target=Typing(msgobj,self.usr).get_config).start()
+                
                 continue
 
         # 旧逻辑参考

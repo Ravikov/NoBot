@@ -2,187 +2,164 @@ import time
 from nobot.src.common import load_history, save_history, load_config
 from nobot.src.core.mem.memory import set_memory
 from nobot.src.core.get_reply.touch_llm import *
-from debug.log import log
+from debug.log import *
 
 
-class ReplyHandler:
-    """处理消息并生成回复"""
+class Reply:
+    """接收标准格式消息字典 生成回复"""
 
-    def __init__(self):
-        self.config = load_config()
+    def __init__(self, msgdict):
+        """
+            标准输入格式:
+            {
+            'msg': []
+            'type': 1/2/5/9
+            'media': [{'type': ,'media': }]
+            }
+            标准输出格式:
+            {
+            'msg': []
+            'type': 1
+            'delay': ms
+            }
+        """
+        debug_log(f'消息输入Reply:{msgdict}')
+        self.msgdict = msgdict
+        self.config  = load_config()
+        self.memory  = load_history()
+        self.llm_msg = {}
+        self.touch_result = {}
 
-    # ---- 内部工具 ----
-    def _txt_wash(self, text, wash=None):
+    def media(self):
+        n = 1
+        for i in self.msgdict['media']:
+            log('调用视觉模型...')
+            type_desc = '图片' if i['type'] == 2 else '视频'
+            toucher = TouchLLM(
+                msg=i['media'],
+                llm='multimodalAPI',
+                tpe=i['type']
+                )
+            toucher.touch()
+            self.touch_result = toucher.result
+            self.touch_result['msg'] = self.txt_wash(self.touch_result['msg'],wash=["。", "，", "！", "?", "\n"])
+            if self.msgdict['type'] == 9:
+                placehoder = f'<{type_desc}消息{n}>'
+                self.msgdict['msg'][self.msgdict['msg'].index(placehoder)] = f'<{type_desc}消息(描述由多模态AI提供)>{self.touch_result["msg"]}'
+                n+=1
+            else:
+                self.msgdict['msg'] = f'<{type_desc}消息(描述由多模态AI提供)>{self.touch_result["msg"]}'
+
+    def text(self):
+        match self.msgdict['msg']:
+
+            case '/rememory':
+                log('清除记忆')
+                self.memory['history'] = [
+                    {"role": "user", "content": "对话格式举例,非用户消息与上下文,回复格式请遵从于此"}, 
+                    {"role": "assistant", "content": "在在在#我刚在玩游戏#你呢 你干啥呢"}
+                    ]
+                self.memory['turns'] = 0
+                save_history(self.memory)
+                self.llm_msg = {
+                    'msg': '清除记忆成功',
+                    'type': 1,
+                    'delay': 0
+                    }
+
+            case '/memory':
+                log('总结记忆...')
+                self.touch_result = set_memory()
+                self.llm_msg = {
+                    'msg': self.txt_wash(self.touch_result['msg']),
+                    'type': self.touch_result['type'],
+                    'delay': self.touch_result['delay']
+                    }
+
+            case _:
+                if self.msgdict['type'] == 9:
+                    self.msgdict['msg'] = '#'.join(self.msgdict['msg'])
+                log(f'调用辅助模型判断联网...')
+                toucher = TouchLLM(
+                    msg=None,
+                    llm='secAPI',
+                    sysmsg=(
+                        self.config['or_search_prompt']
+                        + [{'role':'user','content':f"判断本消息:{self.msgdict['msg']}"}]
+                        )
+                    )
+                toucher.touch()
+                log(f'判断完毕:{toucher.result["msg"]}')
+                if toucher.result['msg'] == '0':
+                    toucher.llm = 'API'
+                    toucher.usrmsg = self.msgdict['msg']
+                    toucher.touch()
+                else:
+                    toucher.search = True
+                    toucher.llm = 'searchAPI'
+                    toucher.usrmsg = self.msgdict['msg']
+                    toucher.touch()
+                
+                self.touch_result = toucher.result
+        
+        
+    def reply(self):
+        # 类型判断
+        match self.msgdict['type']:
+            case 1:
+                log(f'收到文本消息:{self.msgdict["msg"]}')
+                self.text()
+            case 2 | 5 | 9:
+                log(f"收到消息:{self.msgdict['msg']},type:{self.msgdict['type']}")
+                self.media()
+                self.text()
+            case _:
+                log('消息类型未匹配!')
+                return {}
+
+        if self.msgdict['msg'][0] != '/':
+            self.touch_result['msg'] = self.txt_wash(self.touch_result['msg'])
+
+            msg_list = []
+            txt = ''
+            for t in self.touch_result['msg']:
+                if t != '#':
+                    txt = txt + t
+                else:
+                    if txt != '':
+                        msg_list.append(txt)
+                        txt = ''
+            msg_list.append(txt)
+            debug_log(msg_list)
+            self.touch_result['msg'] = msg_list
+
+            self.llm_msg = {
+                'msg': self.touch_result['msg'],
+                'type': self.touch_result['type'],
+                'delay': self.touch_result['delay']
+                }
+            
+            self.touch_result['msg'] = '#'.join(self.touch_result['msg'])
+            self.memory['history']+=[
+                {'role':'user','content':self.msgdict['msg']},
+                {'role':'assistant','content':self.touch_result['msg']}
+                ]
+
+            if self.memory['turns'] >= self.config['max_history_turns']:
+                log('进行记忆总结...')
+                set_memory()
+
+
+    def txt_wash(self, txt, wash=None):
         """清洗回复文本"""
         if wash is None:
             wash = self.config['txt_wash']
         t = ''
-        for i in text:
+        for i in txt:
             if i in wash:
                 pass
-            elif i == '，':
+            elif i == '，' and self.config['wash_comma']:
                 t = t + ' '
             else:
                 t = t + i
         return t
-
-    def _text(self, msgtxt):
-        """文本 → 调用主模型或联网搜索"""
-        if self.config['or_search']:
-            log('调用辅助模型判断联网功能...')
-            or_search = sec_llm(
-                0,
-                [{'role': 'system', 'content': msgtxt}] +
-                self.config['or_search_prompt']
-            )
-            log(f'判断完毕,结果: {or_search}')
-        else:
-            or_search = '0'
-
-        if or_search == '1':
-            log('调用联网搜索模型...')
-            return search_api(msgtxt)
-        elif or_search == '0':
-            log('调用主模型api...')
-            return fst_llm(msgtxt)
-        else:
-            log('辅助模型输出错误')
-            return None, 0, 0, None
-
-    def _media_reply(self, tpe, media, type_desc):
-        """多媒体 → 调用多模态模型理解"""
-        result, state, ms, orgin_result = multimodal(tpe, media)
-        if result is None:
-            log(f'{type_desc}理解失败', 'Warn')
-            return ''
-        media_dscrb = result
-        media_dscrb_log = self._txt_wash(media_dscrb, wash=["。", "，", "！", "?", "\n"])
-        log(f'{type_desc}描述:{media_dscrb_log}')
-        return media_dscrb
-
-    # ---- 主入口 ----
-    def handle(self, msg):
-        """
-        处理消息并生成回复
-        输入: msg = {'type': int, 'msg': list/string, 'media': list/string}
-        返回: {'type': int, 'msg': list, 'delay': float}
-        """
-        debug_log(f'reply函数输入: {msg}')
-
-        # ---- 消息类型分发 ----
-        if msg['type'] == 1:
-            msgtxt = msg['msg']
-            media = None
-        elif msg['type'] in [2, 3, 5]:
-            msgtxt = None
-            media = msg['msg']
-        elif msg['type'] == 9:
-            msgtxt = msg['msg']
-            media = msg['media']
-        else:
-            log('消息类型异常')
-            return {'type': 0, 'msg': ['消息异常'], 'delay': 0}
-
-        # ---- 按类型处理 ----
-        if msg['type'] == 1:
-            # 文本消息
-            if msgtxt[0] == '/':
-                cmd = msgtxt[1:]
-                if cmd == 'rememory':
-                    history = load_history()
-                    history['history'] = [{"role": "user", "content": "对话格式举例"}, {"role": "assistant", "content": "在在在#我刚在玩游戏#你呢 你干啥呢"}]
-                    history['memory'] = [{"role": "system", "content": ""}]
-                    history['turns'] = 0
-                    save_history(history)
-                    log('清除记忆')
-                    return {'type': 1, 'msg': ['清除记忆成功'], 'delay': 0}
-                elif cmd == 'memory':
-                    log('记忆总结...')
-                    return set_memory()
-                else:
-                    log('未知指令,本次输入略过')
-                    return {'type': 1, 'msg': ['未知的指令'], 'delay': 0}
-            else:
-                result, state, ms, orgin_result = self._text(msgtxt)
-
-        elif msg['type'] in [2, 5]:
-            # 多媒体消息
-            type_desc = '图片' if msg['type'] == 2 else '视频'
-            log(f'收到{type_desc},调用模型理解')
-            media_dscrb = self._media_reply(msg['type'], msg['media'], type_desc)
-            result, state, ms, orgin_result = self._text(
-                f'<{type_desc}消息(由多模态AI描述)>{media_dscrb}'
-            )
-
-        elif msg['type'] == 9:
-            # 消息列表
-            log('收到消息列表,调用模型处理...')
-            n_media = 1
-            for m in msg['media']:
-                type_desc = '图片' if m['type'] == 2 else '视频'
-                log(f'处理{type_desc}消息{n_media}...')
-                media_dscrb = self._media_reply(m['type'], m['media'], type_desc)
-                placeholder = f'<{type_desc}消息{n_media}>'
-                msgtxt[msgtxt.index(placeholder)] = \
-                    f'{placeholder}(由多模态AI描述)>{media_dscrb}'
-                n_media += 1
-            msgtxt = '#'.join(msgtxt)
-            result, state, ms, orgin_result = self._text(str(msg))
-
-        # ---- 后处理：清洗 + 拆分 ----
-        result = self._txt_wash(result)
-
-        re_list = []
-        txt = ''
-        for t in result:
-            if t != '#':
-                txt = txt + t
-            else:
-                if txt != '':
-                    re_list.append(txt)
-                    txt = ''
-        re_list.append(txt)
-        result = re_list
-
-        log(f'状态正确,提交回复: {result}')
-
-        # ---- 记忆管理 ----
-        history = load_history()
-        if history.get('turns', 0) >= self.config.get('max_history_turns', 20) - 1:
-            log('需要进行记忆总结,正在调用api')
-            set_memory()
-
-        log('写入记忆...')
-        history = load_history()
-        if msg['type'] in [2, 5]:
-            user_msg = f'<{type_desc}(描述由AI生成)>{media_dscrb}'
-        else:
-            user_msg = msgtxt
-        timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-        history['history'].append({
-            "role": "user",
-            "content": f"[发送本条消息的时间:{timestamp}]" + str(user_msg)
-        })
-        # 将多条回复用 # 合并
-        txt = ''
-        for i, t in enumerate(result):
-            if i == 0:
-                txt = t
-            else:
-                txt = txt + '#' + t
-        history['history'].append({"role": "assistant", "content": txt})
-        history['turns'] = history.get('turns', 0) + 1
-        save_history(history)
-        log('写入完毕')
-
-        return {'type': 1, 'msg': result, 'delay': ms}
-
-
-# ---- 保持原有函数接口，旧代码调用 reply(msg) 仍然可用 ----
-_handler = None
-
-def reply(msg):
-    global _handler
-    if _handler is None:
-        _handler = ReplyHandler()
-    return _handler.handle(msg)

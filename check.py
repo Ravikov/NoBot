@@ -18,22 +18,22 @@ def check():
         "secAPI":{
             "key": "",
             "url": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
-            "name": "qwen3.6-flash"
+            "name": "qwen3.7-plus"
         },
         "searchAPI":{
             "key": "",
             "url": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
-            "name": "qwen3.6-flash"
+            "name": "qwen3.7-plus"
         },
         "multimodalAPI": {
             "key": "",
             "url": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
-            "name": "qwen3.6-flash"
+            "name": "qwen3.7-plus"
         },
         "imageAPI": {
             "key": "",
             "url": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
-            "name": "qwen3.6-flash"
+            "name": "qwen3.7-plus"
         },
         "max_tokens": 1500,
         "temperature": 1.0,
@@ -52,7 +52,8 @@ def check():
         "or_search": True,
         "non_setup": True,
         "debug": False,
-        "llm_decide_wait": True
+        "llm_decide_wait": True,
+        "wash_comma": False
     }
 
     DEFAULT_WECHATCLAW = {
@@ -69,7 +70,7 @@ def check():
         "history": [
         {
             "role": "user",
-            "content": "对话格式举例,回复格式请遵从于此"
+            "content": "对话格式举例,非用户消息与上下文,回复格式请遵从于此"
         },
         {
             "role": "assistant",
@@ -147,11 +148,12 @@ def check():
         log('检查日志文件大小...')
         size = os.path.getsize(ROOT.parent / 'debug' / 'bot.log')
         log(f'当前日志文件大小: {size/(1024*1024):.2f} MB')
-        if size > 5*1024*1024:
+        if size > 10*1024*1024:
             log('日志文件过大,尝试清理...')
-            with open(ROOT.parent / 'debug' / 'bot.log','w',encoding='utf-8') as f:
+            with open(ROOT.parent / 'debug' / 'bot.log','r',encoding='utf-8') as f:
                 final_lines = deque(f,maxlen=1000)
-                f.writelines(f,list(final_lines))
+            with open(ROOT.parent / 'debug' / 'bot.log','w',encoding='utf-8') as f:
+                f.writelines(final_lines)
             log('日志文件清理完毕')
         else:
             log('日志文件大小正常')

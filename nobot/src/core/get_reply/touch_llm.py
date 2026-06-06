@@ -4,134 +4,137 @@ import time
 from nobot.src.common import *
 from debug.log import log
 
-with open(PROMPT_FILE,"r",encoding="utf-8") as f:
-    role_prompt = f.read()
 
-config = load_config()
+class TouchLLM:
+    """大模型api调用,传入msg,llm代号"""
+    # line82-result
 
-# api post函数
-@retry
-def api_post(headers,data,url):
-    debug_log(f'API请求 URL: {url}, body: {data}')
-    response = requests.post(
-        url=url,
-        headers=headers,
-        json=data,
-        timeout=30  # 超时时间，防止卡死
-    )
-    return response
+    def __init__(self, msg, llm, tpe=1, sysmsg=None, tem=0, search=False):
+        # llm: API,secAPI,searchAPI,multimodalAPI
+        self.usrmsg  = msg
+        self.sysmsg  = sysmsg
+        self.llm     = llm
+        self.postmsg = '' # 模型收到的消息
+        self.max_tokens = 2048
+        self.tem     = tem
+        self.search  = search
+        self.tpe     = tpe
+        self.config  = load_config()
 
-def connect(messages=None,key=None,url=None,model=None,tem=0,max_tokens=2048,search=False,data=False):
-    # 准备headers
-    headers = {
-        "Authorization": f'Bearer {key}',  # 证明你有权限调用
-        "Content-Type": "application/json"     # 告诉服务器：我发给你的Body是JSON格式
-    }
+        self.result  = {}
 
-    # 创建data
-    if data:
-        pass
-    else:
-        data = {
-            "model": model,
-            "messages": messages,
-            "max_tokens": max_tokens,
-            "temperature": tem,
-            "enable_web_search": search,
-            "thinking": {"type": "disabled"}
+        with open(PROMPT_FILE, "r", encoding="utf-8") as f:
+            self.role_prompt = f.read()
+
+    @retry
+    def get_result(self):
+        
+        headers = {
+            "Authorization": f'Bearer {self.config[self.llm]["key"]}',
+            "Content-Type": "application/json"
         }
 
-    # 发出post请求
-    response = api_post(headers,data,url)
-    if response.status_code == 200:
-        return response,200
-    else:
-        log(response.text)
-        log('状态码错误: '+str(response.status_code))
-        return None, response.status_code  # 返回 None 而非 1, 避免与有效返回值混淆 (Edited by DeepSeek TUI)
-
-# 调用函数
-def get_re(messages,key,url,model,tem=0,max_tokens=2048,search=False):
-    response,state = connect(messages=messages,key=key,url=url,model=model,tem=tem,max_tokens=max_tokens,search=search)
-    # 将结果写入json文件
-    if state == 200:
-        orgin_result = response.json()
-        with open(RESPONSEJSON_FILE,'w',encoding = 'UTF-8') as f:
-                json.dump(orgin_result, f, ensure_ascii=False, indent=2)
-        # 输出status和延迟信息
-        state = response.status_code
-        ms = response.elapsed.total_seconds()
-        # 提取json文件中的有效部分
-        result = orgin_result["choices"][0]["message"]["content"]
-
-        total_tokens = orgin_result["usage"]["total_tokens"]
-        cache_hit_tokens = orgin_result.get("usage")
-        cache_hit_tokens = cache_hit_tokens.get("prompt_cache_hit_tokens",'None')
-
-        with open(STATEJSON_FILE,'r',encoding='UTF-8') as f:
-            tokens = json.load(f)
-        all_tokens = tokens.get("all_tokens") + total_tokens
-        tokens["all_tokens"] = all_tokens
-        with open(STATEJSON_FILE,'w',encoding='UTF-8') as f:
-            json.dump(tokens,f,ensure_ascii=False,indent=2)
+        if self.llm != 'multimodalAPI':
+            data = {
+                "model": self.config[self.llm]['name'],
+                "messages": self.postmsg,
+                "max_tokens": self.max_tokens,
+                "temperature": self.tem,
+                "enable_web_search": self.search,
+                "thinking": {"type": "disabled"}
+            }
+        else:
+            if self.tpe == 2:
+                msg = '描述本张图片,忽略水印内容,除非用户要求'
+                media_content = {'type': 'image_url', 'image_url': {'url': f'data:image/jpeg;base64,{self.usrmsg}'}}
+            elif self.tpe == 5:
+                msg = '描述本条视频的内容,按照不换行的json格式标明内容时间位置及对应画面,重要部分请详细描述'
+                media_content = {'type': 'video_url', 'video_url': {'url': f'data:video/mp4;base64,{self.usrmsg}'}}
+            data = {
+                "model": self.config[self.llm]['name'],
+                "messages": [{
+                    'role': 'user',
+                    'content': [
+                        {'type': 'text', 'text': msg},
+                        media_content
+                        ]
+                    }],
+                "max_tokens": self.max_tokens,
+                "temperature": self.tem
+            }
+            
+        debug_log(f"headers:{headers},data:{data}")
+        resp = requests.post(
+            json=data,
+            headers=headers,
+            url=self.config[self.llm]['url']
+            )
         
-        log('调用结束...')
-        log(f'模型token使用...总tokens: {total_tokens},缓存命中: {cache_hit_tokens},累计tokens: {all_tokens}')
+        log('状态码校验')
+        if resp.status_code == 200:
+            log('状态码正确')
+            with open(RESPONSEJSON_FILE,'w',encoding='utf-8') as f:
+                json.dump(resp.json(),f,indent=2)
+            result = resp.json()
+            llm_msg = result['choices'][0]['message']['content']
+            try:
+                total_token = result['usage']['total_tokens']
+                hit_token   = result['usage']['prompt_cache_hit_tokens']
+                log(f'总token:{total_token},缓存命中:{hit_token},命中率 {hit_token/total_token}')
+            except:
+                pass
 
-        return result,state,ms,orgin_result
-    else:
-        return None, state, None, None  # 返回 None 而非 1, 避免与有效返回值混淆 (Edited by DeepSeek TUI)
+            self.result = {
+                    'msg': llm_msg,
+                    'type': 1,
+                    'origin_resp': resp.text,
+                    'delay': resp.elapsed.total_seconds()
+                }
+        else:
+            match resp.status_code:
+                case 404:
+                    err_dscrb = '连接错误 404 NotFound'
+                case 400:
+                    err_dscrb = '请求错误'
+                case _:
+                    err_dscrb = ''
+            log(f'状态码错误:{resp.status_code},{err_dscrb},响应:{resp.text}')
     
-def get_time():
-    if config['or_time_feel']:
-            now_time = [{"role":"system","content":f"当前时间:{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}"}]
-    else:
-        now_time = []
-    return now_time
+    # 构建回复postmsg
+    def get_postmsg(self):
+        history = load_history()
+        return (
+                    [{"role": "system", "content": self.role_prompt}]
+                    + [{"role": "system", "content": '回答长度稍长时必须使用#符号对你的回答进行分段(仅在两段交界处)除非该场景下长文段对话体验更好,段数不限,不允许出现换行,不允许出现动作描述'}]
+                    + history.get('history', [])
+                    + history.get('memory', [])
+                    + self.get_time()
+                    + [{"role": "user", "content": self.usrmsg}]
+                )
 
-# 调用主api函数
-def fst_llm(question):
-    # 读取记忆并拼接message
-    history = load_history()
-    messages = [{"role": "system", "content": role_prompt}]+[{"role": "system", "content": '回答长度稍长时必须使用#符号对你的回答进行分段(仅在两段交界处)除非该场景下长文段对话体验更好,段数不限,不允许出现换行,不允许出现动作描述'}]+history.get('history')+history.get('memory')+get_time()+[{"role": "user", "content": question}]
-    result,state,ms,orgin_result = get_re(messages,config['API']['key'],config['API']['url'],config['API']['name'],config['temperature'],config['max_tokens'])
-    return result,state,ms,orgin_result
+    def touch(self):
+        match self.llm:
+            case 'API':
+                self.postmsg = self.get_postmsg()
+                self.tem = self.config['temperature']
+                self.max_tokens = 4096
+            case 'secAPI':
+                self.postmsg = self.sysmsg
+            case 'searchAPI':
+                self.postmsg = self.get_postmsg()
+                self.tem = self.config['temperature']
+                self.max_tokens = 4096
+            case 'multimodalAPI':
+                self.postmsg = self.usrmsg
 
-# 辅助api调用函数
-def sec_llm(tem,mes):
-    messages = mes
-    result,state,ms,orgin_result = get_re(messages,config['secAPI']['key'],config['secAPI']['url'],config['secAPI']['name'],tem,4096)
-
-    log('辅助模型完成调用')
-    sec_result = result
-    return sec_result
-
-# 联网搜索模型
-def search_api(mes):
-    history = load_history()
-    messages = [{"role": "system", "content": role_prompt}]+[{"role": "system", "content": '回答长度稍长时必须使用#符号对你的回答进行分段(仅在两段交界处)除非该场景下长文段对话体验更好,段数不限,不允许出现换行,不允许出现动作描述'}]+history.get('history',[])+history.get('memory',[])+get_time()+[{"role": "user", "content": mes}]
-    result,state,ms,orgin_result = get_re(messages,config['searchAPI']['key'],config['searchAPI']['url'],config['searchAPI']['name'],config['temperature'],config['max_tokens'],True)
-    log('联网搜索模型完成调用')
-    
-    return result,state,ms,orgin_result
-
-# 多模态理解模型
-def multimodal(tpe,media):
-    if tpe == 2:
-        msg = '描述本张图片,忽略水印内容,除非用户要求'
-        tpe = {'type':'image_url','image_url':{'url':f'data:image/jpeg;base64,{media}'}}
-    elif tpe == 5:
-        msg = '描述本条视频的内容,按照不换行的json格式标明内容时间位置及对应画面,重要部分请详细描述'
-        tpe = {'type':'video_url','video_url':{'url':f'data:video/mp4;base64,{media}'}}
-    messages = [
-    {
-        'role':'user',
-        'content':[
-            {'type':'text','text':msg},
-            tpe
-        ]
-    }
-    ]
-    result,state,ms,orgin_result = get_re(messages,config['multimodalAPI']['key'],config['multimodalAPI']['url'],config['multimodalAPI']['name'],1.0,2048,True)
-    log('图片理解完毕')
-    return result,state,ms,orgin_result
+            case _:
+                debug_log('传参错误!')
+        self.get_result()
+                
+    def get_time(self):
+        if self.config['or_time_feel']:
+            return [
+                {'role':'system','content':f"当前时间:{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}"}
+                ]
+        else:
+            return []
