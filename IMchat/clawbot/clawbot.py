@@ -16,13 +16,13 @@ from IMchat.clawbot.sendmsg.sendtyping import Typing
 class WechatClawbot:
 
     def __init__(self):
-        self.config    = load_clawbot_config()
         self.uin       = random_wechat_uin()
         self.baseurl   = 'https://ilinkai.weixin.qq.com'
         login          = ClawBotLogin()
         self.token     = login.token_check()
+        self.config    = load_clawbot_config()
         del login
-        self.usr       = WechatBotUsr(self.config['userid'], self.config['name'], self.config['token'])
+        self.usr       = WechatBotUsr(self.config['userid'], self.config.get('name','main'), self.config['token'])
         self.client_id = self.config.get('clientid', str(uuid.uuid4()))
         self.botconfig = load_config()
 
@@ -102,6 +102,7 @@ class WechatClawbot:
                     log('提交处理...')
                     msgobj = self.set_msglist(msgobj) #设定消息列表和类型
                     replyout_obj = get_msg_reply(msgobj)
+                    debug_log(f'发送消息 {replyout_obj.msgtext}')
                     sender = Sender(replyout_obj, self.usr)
                     sender.send()
                     msgobj = WechatBotMessage() #重置消息对象

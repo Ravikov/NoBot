@@ -1,5 +1,6 @@
 from debug.log import log
 import time
+import traceback
 from nobot.src.core.get_reply.reply import Reply
 
 # 消息类
@@ -39,6 +40,21 @@ class ReplyIn(Message):
         super().__init__(msgobj.msgtype, msgobj.msgtext, fromusr=msgobj.fromusr, media=msgobj.media)
 
     def get_reply(self):
-        replyer = Reply({'type': self.msgtype, 'msg': self.msgtext, 'media': self.media})
-        replyer.reply()
-        return ReplyOut(replyer.llm_msg) #返回回复消息对象
+        try:
+            replyer = Reply({'type': self.msgtype, 'msg': self.msgtext, 'media': self.media})
+            replyer.reply()
+            llm_msg = replyer.llm_msg
+        except Exception as e:
+            log(f'发生错误: {traceback.format_exc()}')
+            traceback_msg = traceback.format_exc()
+            llm_msg = {
+                'msg': [f"""发生未能处理的错误,可以尝试重新发送消息,但不保证错误不会再次触发...
+---------------
+Traceback报错:\n{traceback_msg}
+---------------
+str(e):{str(e)}
+repr(e):{repr(e)}""",],
+                'type': -1,
+                'media': None
+                }
+        return ReplyOut(llm_msg) #返回回复消息对象

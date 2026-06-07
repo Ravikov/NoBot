@@ -117,9 +117,14 @@ class TouchLLM:
                     err_dscrb = '您可以自行搜索错误码'
             log(f'状态码错误:{resp.status_code},{err_dscrb},响应:{resp.text}')
             self.result = {
-                    'msg': f"""大模型调用出现问题,请参考日志文件.
+                    'msg': f"""大模型{self.config[self.llm]['name']}调用出现问题,请参考日志文件.
+---------------
 完整响应: {resp.text}
-错误描述: 状态码错误:{resp.status_code}:{err_dscrb}""",
+---------------
+错误描述: 状态码错误:{resp.status_code}:{err_dscrb}
+---------------
+模型配置信息: {self.config[self.llm]}
+""",
                     'type': 1,
                     'origin_resp': resp.text,
                     'delay': -1

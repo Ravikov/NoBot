@@ -102,7 +102,8 @@ class Reply:
                     toucher.touch()
                 else:
                     if toucher.result['delay'] == -1:
-                        self.note.append(f"本次回答中辅助模型出现了错误,详情如下:\n{toucher.result['msg']}")
+                        self.note.append(f"""本次回答中辅助模型出现了错误,详情如下:
+---------------\n{toucher.result['msg']}""")
                     toucher.llm = 'API'
                     toucher.usrmsg = self.msgdict['msg']
                     toucher.touch()

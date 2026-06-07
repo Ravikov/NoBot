@@ -27,7 +27,7 @@ class Sender():
         log('获取ticket...')
         self.typing.get_config()
         n = 1
-        if self.msgtype == 1:
+        if self.msgtype in [1,-1]:
             msgs = self.msgtext if isinstance(self.msgtext, list) else [self.msgtext]
             log(f'回复类型: text, 总条数: {len(msgs)}')
             for msg in msgs:
