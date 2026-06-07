@@ -26,7 +26,7 @@ class Typing():
         )
         if resp.status_code == 200:
             data = resp.json()
-            self.ticket = data['typing_ticket']
+            self.ticket = data.get('typing_ticket')
 
     def send_typing(self):
         log('申请打字状态...')
