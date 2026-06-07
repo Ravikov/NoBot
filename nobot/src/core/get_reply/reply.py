@@ -154,7 +154,7 @@ class Reply:
             
             self.touch_result['msg'] = '#'.join(self.touch_result['msg'])
             self.memory['history']+=[
-                {'role':'user','content':f"本条消息发送时间{time.strftime('%Y-%m-%d %H:%M', time.localtime())}"+self.msgdict['msg']},
+                {'role':'user','content':f"本条消息发送时间{time.strftime('%Y-%m-%d %H:%M', time.localtime())}>>"+self.msgdict['msg']},
                 {'role':'assistant','content':self.touch_result['msg']}
                 ]
             self.memory['turns'] += 1
