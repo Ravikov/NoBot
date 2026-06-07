@@ -1,5 +1,5 @@
 import time
-from nobot.src.common import load_history, save_history, load_config
+from nobot.src.common import load_history, save_history, load_config, DEFAULT_MEMORY, DEFAULT_LONGHISTORY, save_longhistory
 from nobot.src.core.mem.memory import set_memory
 from nobot.src.core.get_reply.touch_llm import *
 from debug.log import *
@@ -29,6 +29,7 @@ class Reply:
         self.memory  = load_history()
         self.llm_msg = {}
         self.touch_result = {}
+        self.note    = []
 
     def media(self):
         n = 1
@@ -55,12 +56,7 @@ class Reply:
 
             case '/rememory':
                 log('清除记忆')
-                self.memory['history'] = [
-                    {"role": "user", "content": "对话格式举例,非用户消息与上下文,回复格式请遵从于此"}, 
-                    {"role": "assistant", "content": "在在在#我刚在玩游戏#你呢 你干啥呢"}
-                    ]
-                self.memory['turns'] = 0
-                save_history(self.memory)
+                save_history(DEFAULT_MEMORY)
                 self.llm_msg = {
                     'msg': '清除记忆成功',
                     'type': 1,
@@ -74,6 +70,15 @@ class Reply:
                     'msg': self.txt_wash(self.touch_result['msg']),
                     'type': self.touch_result['type'],
                     'delay': self.touch_result['delay']
+                    }
+                
+            case '/rehistory':
+                log('清除长上下文保存')
+                save_longhistory(DEFAULT_LONGHISTORY)
+                self.llm_msg = {
+                    'msg': '清除长上下文成功',
+                    'type': 1,
+                    'delay': 0
                     }
 
             case _:
@@ -90,13 +95,15 @@ class Reply:
                     )
                 toucher.touch()
                 log(f'判断完毕:{toucher.result["msg"]}')
-                if toucher.result['msg'] == '0':
-                    toucher.llm = 'API'
+                if toucher.result['delay'] != -1 and toucher.result['msg'] == '1':
+                    toucher.search = True
+                    toucher.llm = 'searchAPI'
                     toucher.usrmsg = self.msgdict['msg']
                     toucher.touch()
                 else:
-                    toucher.search = True
-                    toucher.llm = 'searchAPI'
+                    if toucher.result['delay'] == -1:
+                        self.note.append(f"本次回答中辅助模型出现了错误,详情如下:\n{toucher.result['msg']}")
+                    toucher.llm = 'API'
                     toucher.usrmsg = self.msgdict['msg']
                     toucher.touch()
                 
@@ -104,6 +111,14 @@ class Reply:
         
         
     def reply(self):
+        # funny-复读鸡
+        if self.config['repeat']:
+            self.llm_msg ={
+                'msg': self.msgdict['msg'],
+                'type': 1,
+                'delay': 0
+                }
+            return
         # 类型判断
         match self.msgdict['type']:
             case 1:
@@ -115,35 +130,34 @@ class Reply:
                 self.text()
             case _:
                 log('消息类型未匹配!')
-                return {}
+                self.llm_msg = {
+                    'msg': f"您发送的消息,其类型: {self.msgdict['type']},可能是当前未支持的消息类型",
+                    'type': 1,
+                    'delay': -1
+                    }
+                return
 
         if self.msgdict['msg'][0] != '/':
             self.touch_result['msg'] = self.txt_wash(self.touch_result['msg'])
 
-            msg_list = []
-            txt = ''
-            for t in self.touch_result['msg']:
-                if t != '#':
-                    txt = txt + t
-                else:
-                    if txt != '':
-                        msg_list.append(txt)
-                        txt = ''
-            msg_list.append(txt)
+            msg_list = self.touch_result['msg'].split('#')
             debug_log(msg_list)
             self.touch_result['msg'] = msg_list
 
             self.llm_msg = {
-                'msg': self.touch_result['msg'],
+                'msg': self.touch_result['msg']+self.note,
                 'type': self.touch_result['type'],
                 'delay': self.touch_result['delay']
                 }
+            self.note = []
             
             self.touch_result['msg'] = '#'.join(self.touch_result['msg'])
             self.memory['history']+=[
-                {'role':'user','content':self.msgdict['msg']},
+                {'role':'user','content':f"本条消息发送时间{time.strftime('%Y-%m-%d %H:%M', time.localtime())}"+self.msgdict['msg']},
                 {'role':'assistant','content':self.touch_result['msg']}
                 ]
+            self.memory['turns'] += 1
+            save_history(self.memory)
 
             if self.memory['turns'] >= self.config['max_history_turns']:
                 log('进行记忆总结...')

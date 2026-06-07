@@ -24,6 +24,7 @@ class WechatClawbot:
         del login
         self.usr       = WechatBotUsr(self.config['userid'], self.config['name'], self.config['token'])
         self.client_id = self.config.get('clientid', str(uuid.uuid4()))
+        self.botconfig = load_config()
 
     # ========== 消息收发 ==========
     # 由WechatIn类对象接收,WechatOut类对象发送
@@ -84,22 +85,31 @@ class WechatClawbot:
                     debug_log(f'消息对象状态: {vars(msgobj)}')
                     continue
             if msgobj.msgtime is not None or process_now:
-                try:
-                    process_now = time.time() - msgobj.msgtime >= updater.timeout
-                except TypeError:
-                    pass
+                if not process_now:
+                    try:
+                        process_now = time.time() - msgobj.msgtime >= updater.timeout
+                    except TypeError:
+                        pass
                 if process_now:
+                    # 显示正在输入提示用户开始处理
+                    log('提示输入中')
+                    def get_typing(): #临时函数
+                        typing = Typing(msgobj, self.usr)
+                        typing.get_config()
+                        typing.send_typing()
+                    threading.Thread(target=get_typing).start()
+
                     log('提交处理...')
                     msgobj = self.set_msglist(msgobj) #设定消息列表和类型
                     replyout_obj = get_msg_reply(msgobj)
-                    sender = Sender(replyout_obj, self.usr) #消息发送器
+                    sender = Sender(replyout_obj, self.usr)
                     sender.send()
                     msgobj = WechatBotMessage() #重置消息对象
                     updater.timeout = 35
             else:
                 debug_log('轮询超时,下一次轮询...')
                 debug_log('get_config维持链接...')
-                threading.Thread(target=Typing(msgobj,self.usr).get_config).start()
+                threading.Thread(target=Typing(msgobj, self.usr).get_config).start()
                 
                 continue
 

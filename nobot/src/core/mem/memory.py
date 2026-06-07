@@ -16,15 +16,16 @@ def set_memory():
                                             不要换行,对于多媒体消息不需要过度总结,简要带过即可"""}]
             )
         )
-    memory = sec_llm
-    if memory is None:  # sec_llm 失败时返回 None (Edited by DeepSeek TUI)
+    toucher.touch()
+    memory = toucher.result
+    if memory['delay'] == -1:
         t = '记忆总结失败,请参考api错误码'
         log(t,'error')
         return {'type': 0, 'msg': [t], 'delay': 0}
     else:
         mem['history'] = mem['history'][-10:]
         mem['turns'] = 0
-        mem['memory'] = [{"role": "system", "content": f"[过往记忆]{memory}"}]
+        mem['memory'] = [{"role": "system", "content": f"[过往记忆]{memory['msg']}"}]
         save_history(mem)
         t = '总结记忆完毕'
         log(t)

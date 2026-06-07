@@ -3,3 +3,4 @@ qrcode
 flask
 pycryptodome
 Pillow
+websockets

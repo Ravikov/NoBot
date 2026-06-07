@@ -217,17 +217,25 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# 项目配置文件
-request.json
-*.bak
-debug/response.json
-debug/states.json
-config
-memory
+# ============================================================
+# Custom entries — NoBot project runtime / developer artifacts
+# ============================================================
+
+# Test & debug artifacts
 test.py
 test.json
 get_image*.jpg
 get_image*.png
-# DeepSeek TUI 项目指令目录
+
+# Auto-generated runtime data directories
+config
+memory
+
+# Backup files
+*.bak
+
+# All JSON files are auto-generated runtime data (configs, memories, debug dumps)
+*.json
+
+# Editor / AI-tool project config (e.g. DeepSeek TUI)
 /.deepseek/
-/.deepseek

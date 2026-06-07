@@ -21,8 +21,11 @@ def log(msg, level="INFO"): #过长时写入完整信息 终端提示简略信�
     print(short_line if short_line else log_line, flush=True)
 
 def debug_log(msg):
-    with open(pathlib.Path(__file__).parent.parent / 'nobot' / 'config' / 'config.json', "r", encoding="utf-8") as f:
-        config = json.load(f)
+    try:
+        with open(pathlib.Path(__file__).parent.parent /'nobot'/'config'/'main'/'config.json', "r", encoding="utf-8") as f:
+            config = json.load(f)
+    except:
+        config = {}
     if config.get('debug', False):
         log(msg, level="DEBUG")
     else:

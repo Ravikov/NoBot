@@ -1,9 +1,5 @@
 # 主函数入口
 
-# 执行前检查
-from debug.log import log
-from check import check
-fix_num = check()
 
 import time
 import threading
@@ -11,12 +7,25 @@ import sys
 import io
 import shutil
 import os
-from nobot.src.common import *
-from nobot.src.core.get_reply.touch_llm import *
-from nobot.src.core.get_reply.reply import Reply
-from IMchat.etc.start_ways import *
-from IMchat.clawbot.clawbot import *
-from nobot.src.guide import set_config
+from debug.log import log
+# 在导入之前做用户选择
+try:
+    from nobot.user import *
+
+    # 执行前检查
+    from check import check
+    fix_num = check()
+
+    from nobot.src.common import *
+    from nobot.src.core.get_reply.touch_llm import *
+    from nobot.src.core.get_reply.reply import Reply
+    from IMchat.etc.start_ways import *
+    from IMchat.clawbot.clawbot import *
+    from nobot.src.guide import set_config
+    from websocket.server import Websocket
+except KeyboardInterrupt:
+    log('程序结束')
+    sys.exit(1)
 
 # 设置编码
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
@@ -46,24 +55,40 @@ def run_bot():
     if __name__ == '__main__':
         log('程序启动')
         time.sleep(1)
+        start_way = None
         if config['non_setup']:
             log('首次启动,编辑配置文件...')
-            g = input('如果您的配置文件有备份,可以输入"Y"并回车来跳过索引,否则直接回车[务必确定您有备份]: ')
-            if g in ['Y','y']:
-                start_way = 'load'
+            if usrobj.name != 'main':
+                a = input(f"当前用户{usrobj.name}不是主用户,要沿用主用户的配置文件吗?[y/n]: ")
+                if a in ['Y','y']:
+                    try:
+                        shutil.copy(
+                            ROOT / 'config' / 'main' / 'config.json',
+                            CONFIG_FILE
+                            )
+                        print('加载配置文件成功!')
+                        debug_log(f'将{usrobj.name}的配置文件沿用为main')
+                    except:
+                        print('导入配置文件失败,请手动配置')
+                        start_way = 'set'
             else:
                 start_way = 'set'
-        else:
+        if not start_way:
+            #0-测试模型联通(一般会消耗 10 tokens左右)
+            #
+            #
+
             print("""启动引导:
                 del-清理日志文件
                 save-备份配置文件
                 load-恢复上一次备份
                 set-设置配置文件
-                0-测试模型联通(一般会消耗 10 tokens左右)
+                ----------------------------
                 1-webhook启动(未维护,不建议使用)
                 2-命令行启动
                 3-微信启动(不可用)
                 4-微信clawbot启动
+                5-Websocket启动
             """)
             print('在下方输入选择编号并回车,程序运行途中,您可以随时按 CTRL+C 退出,包括现在')
             try:
@@ -73,26 +98,26 @@ def run_bot():
                 raise KeyboardInterrupt
         
         match start_way:
-            case '0':
-                answer = input(
-                    '请输入要测试的模型...\n'
-                    '当前可选模型列表:\n'
-                    f"1-主模型: {config['API']['name']} , url地址: {config['API']['url']}\n"
-                    f"2-辅助模型: {config['secAPI']['name']} , url地址: {config['secAPI']['url']}\n"
-                    f"3-联网模型: {config['searchAPI']['name']} , url地址: {config['searchAPI']['url']}\n"
-                    '4-亦可键入url,key,modle进行测试\n'
-                )
-                if answer == '1':
-                    test('API')
-                elif answer == '2':
-                    test('secAPI')
-                elif answer == '3':
-                    test('searchAPI')
-                elif answer == '4':
-                    url = input('请输入模型url地址: ')
-                    key = input('请输入对应url的API key: ')
-                    model = input('请输入模型名: ')
-                    test(0,url,key,model)
+            # case '0':
+                # answer = input(
+                #     '请输入要测试的模型...\n'
+                #     '当前可选模型列表:\n'
+                #     f"1-主模型: {config['API']['name']} , url地址: {config['API']['url']}\n"
+                #     f"2-辅助模型: {config['secAPI']['name']} , url地址: {config['secAPI']['url']}\n"
+                #     f"3-联网模型: {config['searchAPI']['name']} , url地址: {config['searchAPI']['url']}\n"
+                #     '4-亦可键入url,key,modle进行测试\n'
+                # )
+                # if answer == '1':
+                #     test('API')
+                # elif answer == '2':
+                #     test('secAPI')
+                # elif answer == '3':
+                #     test('searchAPI')
+                # elif answer == '4':
+                #     url = input('请输入模型url地址: ')
+                #     key = input('请输入对应url的API key: ')
+                #     model = input('请输入模型名: ')
+                #     test(0,url,key,model)
             case '1':
                 # 子线程
                 # 1.创建子线程flask启动函数
@@ -123,14 +148,21 @@ def run_bot():
                     except EOFError:
                         print('\n')
                 threading.Thread(target=cmd_start,daemon=True).start()
+
             case '3':
                 log('微信启动...')
                 threading.Thread(target=wechat_bot,daemon=True).start()
+
             case '4':
                 log('Wechat Claw Bot启动...')
                 debug_log('尝试创建 WechatClawbot 对象')
                 wechat_clawbot = WechatClawbot()
                 threading.Thread(target=wechat_clawbot.wechat_claw,daemon=True).start()
+
+            case '5':
+                log('Websocket————无限可能!')
+                websocketer = Websocket()
+                threading.Thread(target=websocketer.start,daemon=True).start()
 
             case 'set':
                 threading.Thread(target=set_config,daemon=True).start()
@@ -159,7 +191,7 @@ if __name__ == '__main__':
         while True:
             time.sleep(2)
     except KeyboardInterrupt:
-        log('收到终止指令,2秒后退出...')
-        time.sleep(2)
+        log('收到终止指令,退出...')
+        time.sleep(1)
         log("程序优雅退出~")
     log(f'程序结束,结束码: {ender}')

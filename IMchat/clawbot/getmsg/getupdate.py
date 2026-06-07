@@ -1,5 +1,5 @@
 import requests
-from nobot.src.common import ROOT
+from nobot.src.common import *
 from IMchat.clawbot.clawbot_common import make_auth_headers,save_clawbot_config
 from debug.log import *
 
@@ -36,7 +36,7 @@ class GetUpdate():
             }
             resp = requests.post(url=url, headers=headers, json=data, timeout=self.timeout)
             debug_log(f'长轮询响应: {resp.text}')
-            with open(ROOT.parent/'IMchat'/'clawbot'/'debug'/'request.json','w',encoding='utf-8') as f:
+            with open(REQUEST_JSON_FILE,'w',encoding='utf-8') as f:
                 json.dump(resp.json(),f,indent=2)
             if resp.json().get('msgs'):
                 state = resp.status_code

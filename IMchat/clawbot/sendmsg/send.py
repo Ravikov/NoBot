@@ -31,7 +31,7 @@ class Sender():
             msgs = self.msgtext if isinstance(self.msgtext, list) else [self.msgtext]
             log(f'回复类型: text, 总条数: {len(msgs)}')
             for msg in msgs:
-                if msg == ' ':
+                if msg in [' ','']:
                     continue
                 threading.Thread(target=self.typing.send_typing).start()
                 time.sleep(0.5)
