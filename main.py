@@ -17,8 +17,8 @@ try:
     fix_num = check()
 
     from nobot.src.common import *
-    from nobot.src.core.get_reply.touch_llm import *
-    from nobot.src.core.get_reply.reply import Reply
+    from nobot.src.core.llm.touch_llm import *
+    from nobot.src.core.reply.reply import Reply
     from IMchat.etc.start_ways import *
     from IMchat.clawbot.clawbot import *
     from nobot.src.guide import set_config
@@ -79,7 +79,7 @@ def run_bot():
             #
 
             print("""启动引导:
-                del-清理日志文件
+                del-清理启动时日志文件
                 save-备份配置文件
                 load-恢复上一次备份
                 set-设置配置文件
@@ -173,11 +173,8 @@ def run_bot():
                 shutil.copy(CONFIGBAK_FILE,CONFIG_FILE)
                 log('加载配置文件成功!')
             case 'del':
-                if input('您确定要删除过往[所有]日志吗? [Y/n]: ') in ['Y','y']:
-                    os.remove(ROOT.parent/'debug'/'bot.log')
-                    log('过往日志清理完毕')
-                else:
-                    log('取消清理')
+                os.remove(ROOT.parent/'debug'/'bot.log')
+                log('启动时日志清理完毕')
 
             case _:
                 log('输入有误')

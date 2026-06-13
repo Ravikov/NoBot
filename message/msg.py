@@ -1,7 +1,7 @@
 from debug.log import log
 import time
 import traceback
-from nobot.src.core.get_reply.reply import Reply
+from nobot.src.core.reply.reply import Reply
 
 # 消息类
 
@@ -36,8 +36,11 @@ class ReplyOut(Message):
 
 # 子类 reply函数输入消息 以消息对象构建reply输入字典
 class ReplyIn(Message):
-    def __init__(self, msgobj):
-        super().__init__(msgobj.msgtype, msgobj.msgtext, fromusr=msgobj.fromusr, media=msgobj.media)
+    def __init__(self, msgdict):
+        super().__init__(msgtype=msgdict['type'],
+                         msgtext=msgdict['msg'],
+                         fromusr=msgdict['fromusr'],
+                         media=msgdict['media'])
 
     def get_reply(self):
         try:

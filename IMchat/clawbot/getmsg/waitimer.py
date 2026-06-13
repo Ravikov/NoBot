@@ -1,6 +1,6 @@
 from nobot.src.common import load_config
 from debug.log import *
-from nobot.src.core.get_reply.touch_llm import TouchLLM
+from nobot.src.core.llm.touch_llm import TouchLLM
 from nobot.src.common import load_history
 
 class Waitimer(): #传入消息handle对象 获取等待时间

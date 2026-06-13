@@ -1,4 +1,4 @@
-from nobot.src.core.get_reply.touch_llm import TouchLLM
+from nobot.src.core.llm.touch_llm import TouchLLM
 from nobot.src.common import *
 from debug.log import log
 

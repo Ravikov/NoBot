@@ -4,7 +4,6 @@ from debug.log import *
 from nobot.user.user import usrobj
 
 usrname = usrobj.name
-debug_log(f'本次启动的用户名: {usrname}')
 # 配置文件全局路径
 ROOT = pathlib.Path(__file__).parent.parent
 log(f'工作目录 {ROOT}')
@@ -26,6 +25,7 @@ MEMORY_FILE = ROOT / 'memory' / usrname / 'memory.json'
 RESPONSEJSON_FILE = ROOT.parent / 'debug' / 'response.json'
 LONGHISTORY_JSON_FILE = ROOT / 'memory' / usrname / 'longhistory.json'
 REQUEST_JSON_FILE = ROOT.parent / 'IMchat' / 'clawbot' / 'debug' / 'request.json'
+LOGFILE = ROOT.parent / 'debug' / f'{usrname}_bot.log'
 
 # 设置项列举
 llm_list = [
@@ -139,14 +139,3 @@ def save_history(history):
     longhistory['history'] += history['history'][:-2]
     save_longhistory(longhistory)
     
-
-# retry装饰器
-def retry(obj,trytime=3):
-    def wrapper(*args,**kwargs):
-        for i in range(trytime):
-            try:
-                return obj(*args,**kwargs)
-            except Exception as e:
-                log(f'执行{obj.__name__}发生错误: {e}, 正在重试...({i+1}/{trytime})','Error')
-        log(f'执行{obj.__name__}失败: 已达最大重试次数 {trytime}', 'Error')
-    return wrapper

@@ -9,7 +9,6 @@ from IMchat.clawbot.login import ClawBotLogin
 from IMchat.clawbot.getmsg.getupdate import GetUpdate
 from IMchat.clawbot.getmsg.handlemsg import Handle
 from IMchat.clawbot.getmsg.waitimer import Waitimer
-from IMchat.clawbot.getmsg.replymsg import get_msg_reply
 from IMchat.clawbot.sendmsg.send import Sender
 from IMchat.clawbot.sendmsg.sendtyping import Typing
 
@@ -60,6 +59,7 @@ class WechatClawbot:
         log('开始运行...')
         updater  = GetUpdate(self.usr)
         msgobj   = WechatBotMessage()
+        handler = Handle(usrobj=self.usr)
 
         while 1:
             process_now = False
@@ -67,8 +67,8 @@ class WechatClawbot:
             updater.getupdates() #长轮询接收消息
             if updater.resp:
                 log('收到消息')
-                handler   = Handle(msgobj, self.usr)
-                handler.body = updater.body
+                handler.msgobj = msgobj
+                handler.body   = updater.body
                 handler.fetch()
                 msgobj = handler.msgobj # 交换消息对象
                 msgobj.msgtime = time.time()
@@ -101,7 +101,7 @@ class WechatClawbot:
 
                     log('提交处理...')
                     msgobj = self.set_msglist(msgobj) #设定消息列表和类型
-                    replyout_obj = get_msg_reply(msgobj)
+                    replyout_obj = msgobj.get_msg_reply()
                     debug_log(f'发送消息 {replyout_obj.msgtext}')
                     sender = Sender(replyout_obj, self.usr)
                     sender.send()

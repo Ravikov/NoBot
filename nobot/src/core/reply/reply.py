@@ -1,7 +1,7 @@
 import time
 from nobot.src.common import load_history, save_history, load_config, DEFAULT_MEMORY, DEFAULT_LONGHISTORY, save_longhistory
 from nobot.src.core.mem.memory import set_memory
-from nobot.src.core.get_reply.touch_llm import *
+from nobot.src.core.llm.touch_llm import *
 from debug.log import *
 
 
@@ -23,7 +23,11 @@ class Reply:
             'delay': ms
             }
         """
-        debug_log(f'消息输入Reply:{msgdict}')
+        # debug_log 截断 media 避免日志膨胀
+        log_msgdict = {k: v for k, v in msgdict.items()}
+        if isinstance(log_msgdict.get('media'), list):
+            log_msgdict['media'] = [{'type': m['type'], 'media': f'<base64 {len(m["media"])} chars>'} for m in log_msgdict['media']]
+        debug_log(f'消息输入Reply:{log_msgdict}')
         self.msgdict = msgdict
         self.config  = load_config()
         self.memory  = load_history()
@@ -34,7 +38,7 @@ class Reply:
     def media(self):
         n = 1
         for i in self.msgdict['media']:
-            log('调用视觉模型...')
+            log(f'调用视觉模型...')
             type_desc = '图片' if i['type'] == 2 else '视频'
             toucher = TouchLLM(
                 msg=i['media'],
@@ -152,10 +156,14 @@ class Reply:
                 }
             self.note = []
             
-            self.touch_result['msg'] = '#'.join(self.touch_result['msg'])
+            if self.config['debug']:
+                memory_msg = '#'.join(self.touch_result['msg'][:-1])
+            else:
+                memory_msg = '#'.join(self.touch_result['msg'])
+
             self.memory['history']+=[
                 {'role':'user','content':f"本条消息发送时间{time.strftime('%Y-%m-%d %H:%M', time.localtime())}>>"+self.msgdict['msg']},
-                {'role':'assistant','content':self.touch_result['msg']}
+                {'role':'assistant','content':memory_msg}
                 ]
             self.memory['turns'] += 1
             save_history(self.memory)

@@ -1,7 +1,7 @@
 import asyncio
 import websockets
 from debug.log import *
-from nobot.src.core.get_reply.reply import Reply
+from nobot.src.core.reply.reply import Reply
 
 
 class Websocket:

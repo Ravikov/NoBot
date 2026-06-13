@@ -31,7 +31,7 @@ def check():
         CONFIGBAK_FILE,
         CLAWBOT_FILE,
         PROMPT_FILE,
-        ROOT.parent / 'debug' / 'bot.log',
+        LOGFILE,
         RESPONSEJSON_FILE,
         MEMORY_FILE,
         LONGHISTORY_JSON_FILE,
@@ -67,13 +67,13 @@ def check():
     # log大小检查
     def log_check():
         log('检查日志文件大小...')
-        size = os.path.getsize(ROOT.parent / 'debug' / 'bot.log')
+        size = os.path.getsize(LOGFILE)
         log(f'当前日志文件大小: {size/(1024*1024):.2f} MB')
         if size > 10*1024*1024:
             log('日志文件过大,尝试清理...')
-            with open(ROOT.parent / 'debug' / 'bot.log','r',encoding='utf-8') as f:
+            with open(LOGFILE,'r',encoding='utf-8') as f:
                 final_lines = deque(f,maxlen=1000)
-            with open(ROOT.parent / 'debug' / 'bot.log','w',encoding='utf-8') as f:
+            with open(LOGFILE,'w',encoding='utf-8') as f:
                 f.writelines(final_lines)
             log('日志文件清理完毕')
         else:

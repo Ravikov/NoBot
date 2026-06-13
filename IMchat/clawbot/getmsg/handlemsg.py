@@ -4,11 +4,11 @@ from IMchat.clawbot.getmsg.mediagetter import MediaGetter
 
 class Handle(WechatBotMessage):
 
-    def __init__(self, msgobj, usrobj):
+    def __init__(self, usrobj):
         super().__init__()
-        self.body = None
-        self.msgobj  = msgobj
-        self.usrobj = usrobj
+        self.body    = None
+        self.msgobj  = None
+        self.usrobj  = usrobj
         self.n_media = 1
         self.n       = 1
         self.process_now  = False
@@ -63,4 +63,11 @@ class Handle(WechatBotMessage):
             # 'context_token': self.context_token,
             'media': self.msgobj.media
         }
-        debug_log(f'接收消息: {get_msg}')
+        # debug_log 截断 media 避免日志膨胀
+        log_msg = get_msg.copy()
+        if log_msg.get('media'):
+            if isinstance(log_msg['media'], list):
+                log_msg['media'] = [{'type': m['type'], 'media': f'<base64 {len(m["media"])} chars>'} for m in log_msg['media']]
+            else:
+                log_msg['media'] = f'<base64 {len(log_msg["media"])} chars>'
+        debug_log(f'接收消息: {log_msg}')

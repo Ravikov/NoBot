@@ -3,6 +3,7 @@ import json
 import time
 from nobot.src.common import *
 from debug.log import log
+from nobot.src.core.llm.retry import retry
 
 
 class TouchLLM:
@@ -73,11 +74,16 @@ class TouchLLM:
                 "temperature": self.tem
             }
             
-        debug_log(f"headers:{headers},data:{data}")
+        if self.llm == 'multimodalAPI':
+            debug_log(f'请求多模态API: model={self.config[self.llm]["name"]}, 媒体大小={len(self.usrmsg) if self.usrmsg else 0} chars')
+        else:
+            debug_log(f"请求API: model={self.config[self.llm]['name']}")
+        timeout = 60 if self.llm == 'multimodalAPI' else 30
         resp = requests.post(
             json=data,
             headers=headers,
-            url=self.config[self.llm]['url']
+            url=self.config[self.llm]['url'],
+            timeout=timeout
             )
         
         log('状态码校验')

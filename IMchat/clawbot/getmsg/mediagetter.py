@@ -3,7 +3,7 @@ import requests
 # import io
 # from PIL import Image
 from Crypto.Cipher import AES
-from nobot.src.common import retry
+from nobot.src.core.llm.retry import retry
 from debug.log import *
 from IMchat.clawbot.clawbot_common import make_auth_headers
 

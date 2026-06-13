@@ -149,7 +149,9 @@ def run():
                     debug_log(f"创建目录{f}")
                     pathlib.Path(f).mkdir(parents=True)
                 userlist = load_usrjson()['user']
-                new_usrdict = {'name':creat_name,'creat_time':time.strftime('%Y-%m-%d %H:%M',time.localtime())}
+                new_usrdict = {'name':creat_name,
+                               'creat_time':time.strftime('%Y-%m-%d %H:%M',time.localtime())
+                               }
                 userlist.append(new_usrdict)
                 debug_log(f"添加用户字典{new_usrdict}")
                 save_usrlist(userlist)

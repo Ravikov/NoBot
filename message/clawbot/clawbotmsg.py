@@ -1,7 +1,8 @@
 import uuid
 from IMchat.clawbot.clawbot_common import random_wechat_uin
-from message.msg import Message
+from message.msg import *
 from IMchat.clawbot.clawbot_common import load_clawbot_config
+from debug.log import *
 
 
 # 子类/父类
@@ -15,6 +16,19 @@ class WechatBotMessage(Message): # 微信bot消息基础格式 基本通讯协�
         self.msgtime = None
         self.context_token = None
         self.msgnum = 0
+
+    def get_msg_reply(self):
+        """将wechat消息交由reply处理"""
+        msgdict = {
+            'msg': self.msgtext,
+            'type': self.msgtype,
+            'media': self.media,
+            'fromusr': self.fromusr
+            }
+        debug_log(msgdict)
+        replyout = ReplyIn(msgdict).get_reply()
+        replyout.context_token = self.context_token
+        return replyout # ReplyOut消息对象(额外添加c_t属性)
 
 # wechatbot用户信息
 class WechatBotUsr:
