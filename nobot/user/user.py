@@ -96,18 +96,20 @@ def run():
                 i+=1
                 
             print('请输入启动用户的编号,或输入delete来删除一个用户,输入creat来创建一个用户')
-            start_user = user_number_map[int(input('>>>'))]
+            start_user = input('>>>')
 
-            if start_user in get_namelist():
-                break
-            else:
-                match start_user:
-                    case 'delete':
-                        return User(mode='delete')
-                    case 'creat':
-                        return User(mode='creat')
-                    case _:
-                        log('选择有误,请重新选择!')
+            match start_user:
+                case 'delete':
+                    return User(mode='delete')
+                case 'creat':
+                    return User(mode='creat')
+                case _:
+                    try:
+                        if user_number_map[start_user] in get_namelist():
+                            break
+                    except:
+                        pass
+                    log('选择有误,请重新选择!')
 
         log(f"选定用户{start_user},类型{user_map[start_user]['type']}")
         usrobj = User(name=start_user,type=user_map[start_user]['type'])
@@ -158,6 +160,13 @@ def run():
                     if creat_name in get_namelist():
                         print('新创建的用户名不能和已有的相同! ')
                     else:
+                        while 1:
+                            print('请输入该用户的模式,chat或esp32,前者用以普通聊天,后者可配置esp32控制')
+                            creat_type = input('modeSet/>>>').lower()
+                            if creat_type in ['chat','esp32']:
+                                break
+                            else:
+                                print('输入有误')
                         break
 
                 if creat_name == '/choose':
@@ -170,7 +179,8 @@ def run():
                     pathlib.Path(f).mkdir(parents=True)
                 userlist = load_usrjson()['user']
                 new_usrdict = {'name':creat_name,
-                               'creat_time':time.strftime('%Y-%m-%d %H:%M',time.localtime())
+                               'creat_time':time.strftime('%Y-%m-%d %H:%M',time.localtime()),
+                               'type':creat_type
                                }
                 userlist.append(new_usrdict)
                 debug_log(f"添加用户字典{new_usrdict}")
