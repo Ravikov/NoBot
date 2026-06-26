@@ -216,6 +216,8 @@ class Reply:
                 memory_msg = '#'.join(self.touch_result['msg'][:-1])
             else:
                 memory_msg = '#'.join(self.touch_result['msg'])
+            if usrobj.type == 'esp32':
+                memory_msg = self.touch_result['msg']
 
             self.memory['history']+=[
                 {'role':'user','content':f"本条消息发送时间{time.strftime('%Y-%m-%d %H:%M', time.localtime())}>>"+self.msgdict['msg']},
