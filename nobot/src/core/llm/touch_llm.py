@@ -157,11 +157,11 @@ class TouchLLM:
                     )
         elif self.tpe == 101:
             debug_log("使用esp32提示词")
-            self.tem = 0.5
+            self.tem = 0.3
             return (
                         [{"role": "system", "content": self.role_prompt}]
                         + [{"role": "system", "content": """
-你可以控制一块esp32开发板,你的回复格式必须严格遵循如下json格式,且不要以md代码块包裹:
+你可以控制一块esp32开发板,你的回复格式必须严格遵循如下json格式,且禁止以md代码块包裹,不要出现任何json格式以外的任何内容:
 {
 "msg":这里是你要说的话,字符串,
 "action":这里是你要做的动作,具体可以做哪些动作会在下文提示词告诉你,以动作对应的编号回复,整数,
