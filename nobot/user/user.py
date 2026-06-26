@@ -106,6 +106,7 @@ def run():
                 case _:
                     try:
                         if user_number_map[int(start_user)] in get_namelist():
+                            start_user=user_number_map[int(start_user)]
                             break
                     except:
                         pass

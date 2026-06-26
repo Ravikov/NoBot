@@ -195,7 +195,6 @@ class Reply:
             else:
                 msg_forUsr_list = msg_list
             debug_log(msg_list)
-            self.touch_result['msg'] = msg_list
 
             if self.msgdict['type'] in [100,101,105]:
                 self.esp_result = {  
@@ -212,6 +211,7 @@ class Reply:
             
             self.note = []
             
+
             if self.config['debug']:
                 memory_msg = '#'.join(self.touch_result['msg'][:-1])
             else:

@@ -16,7 +16,6 @@ class Websocket:
         self.port      = 7323
     
     def wait(self, loop):
-        debug_log("WebSocket-wait 被调用")
         while 1:
             try:
                 from message.clawbot.clawbotmsg import msg_queue
@@ -59,8 +58,8 @@ class Websocket:
                 replyer.reply()
                 await self.get_and_send(replyer)
                 
-        except websockets.exceptions.ConnectionClosedError:
-            log(f'客户端{websocket.remote_address}连接断开')
+        except websockets.exceptions.ConnectionClosedError as e:
+            log(f'客户端{websocket.remote_address}连接断开:')
 
     # 获取reply的消息并发送
     async def get_and_send(self, replyer):
