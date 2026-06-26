@@ -1,8 +1,10 @@
 import time
-from nobot.src.common import load_history, save_history, load_config, DEFAULT_MEMORY, DEFAULT_LONGHISTORY, save_longhistory
+from nobot.src.common import *
 from nobot.src.core.mem.memory import set_memory
 from nobot.src.core.llm.touch_llm import *
 from debug.log import *
+
+from nobot.user.user import usrobj
 
 
 class Reply:
@@ -13,12 +15,17 @@ class Reply:
             标准输入格式:
             {
             'msg': []
-            'type': 1/2/5/9
+            'type': 1/2/5/9/100
             'media': [{'type': ,'media': }]
+            }
+            esp32通讯格式:
+            {
+            'msg':文本内容
+            'type':消息类型, 1日常对话, 0首次连接通讯
             }
             标准输出格式:
             {
-            'msg': []
+            'msg': []或{}
             'type': 1
             'delay': ms
             }
@@ -31,9 +38,10 @@ class Reply:
         self.msgdict = msgdict
         self.config  = load_config()
         self.memory  = load_history()
-        self.llm_msg = {}
-        self.touch_result = {}
+        self.llm_msg = {} #最终输出(给前端)
+        self.touch_result = {} #请求器调用结果
         self.note    = []
+        self.esp_result = {'msg':""} #给esp32的输出
 
     def media(self):
         n = 1
@@ -113,7 +121,21 @@ class Reply:
                     toucher.touch()
                 
                 self.touch_result = toucher.result
-        
+    
+    def esp32(self):
+        if self.msgdict['type'] == 100:
+            usrobj.action = self.msgdict['msg'] # 首次连接获取动作列表
+            with open(CONFIG_FILE.parent/'actionAndHardware.txt', 'w', encoding='utf-8') as f:
+                f.write(usrobj.action)
+        elif self.msgdict['type'] in [101,105]:
+            toucher = TouchLLM(
+                msg=self.msgdict['msg'],
+                llm='API',
+                tpe=101,
+                action_dscrb=usrobj.action
+                )
+            toucher.touch()
+            self.touch_result = toucher.result
         
     def reply(self):
         # funny-复读鸡
@@ -133,6 +155,17 @@ class Reply:
                 log(f"收到消息:{self.msgdict['msg']},type:{self.msgdict['type']}")
                 self.media()
                 self.text()
+            case 100 | 101:
+                log('收到来自esp32的消息')
+                self.esp32()
+                if self.msgdict['type'] == 100:
+                    self.llm_msg = {'msg':''}
+                    return
+            case 105:
+                log('收到来自IM的esp32控制消息')
+                self.media()
+                self.text()
+                self.esp32()
             case _:
                 log('消息类型未匹配!')
                 self.llm_msg = {
@@ -146,14 +179,37 @@ class Reply:
             self.touch_result['msg'] = self.txt_wash(self.touch_result['msg'])
 
             msg_list = self.touch_result['msg'].split('#')
+            debug_log(f"from reply: msg_list={msg_list}")
+            msg_forUsr_list = ''
+            if self.msgdict['type'] == 105:
+                debug_log(f"from reply: self.touch_result={self.touch_result}")
+                # time.sleep(100)
+                data = []
+                for i in msg_list:
+                    msg = json.loads(i)
+                    data.append(msg)
+                msg_list = data
+                msg = msg_list[0]['msg']
+                debug_log(f"将向用户发送的消息: {msg}")
+                msg_forUsr_list = msg.split('#')
+            else:
+                msg_forUsr_list = msg_list
             debug_log(msg_list)
             self.touch_result['msg'] = msg_list
 
-            self.llm_msg = {
-                'msg': self.touch_result['msg']+self.note,
+            if self.msgdict['type'] in [100,101,105]:
+                self.esp_result = {  
+                    'msg': msg_list,
+                    'type': self.touch_result['type'],
+                    'delay': self.touch_result['delay']
+                    }
+
+            self.llm_msg = {  #这是给用户看的消息
+                'msg': list(msg_forUsr_list)+self.note,
                 'type': self.touch_result['type'],
                 'delay': self.touch_result['delay']
                 }
+            
             self.note = []
             
             if self.config['debug']:

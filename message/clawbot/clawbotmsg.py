@@ -4,6 +4,7 @@ from message.msg import *
 from IMchat.clawbot.clawbot_common import load_clawbot_config
 from debug.log import *
 
+from nobot.user.user import usrobj
 
 # 子类/父类
 class WechatBotMessage(Message): # 微信bot消息基础格式 基本通讯协议
@@ -19,12 +20,17 @@ class WechatBotMessage(Message): # 微信bot消息基础格式 基本通讯协�
 
     def get_msg_reply(self):
         """将wechat消息交由reply处理"""
+        if usrobj.type == 'chat':
+            pass
+        elif usrobj.type == 'esp32':
+            debug_log("from clawbotMsg: usrobj.type=esp32")
+            self.msgtype = 105  #esp32与chat组合消息处理类型
         msgdict = {
-            'msg': self.msgtext,
-            'type': self.msgtype,
-            'media': self.media,
-            'fromusr': self.fromusr
-            }
+                'msg': self.msgtext,
+                'type': self.msgtype,
+                'media': self.media,
+                'fromusr': self.fromusr
+                }
         debug_log(msgdict)
         replyout = ReplyIn(msgdict).get_reply()
         replyout.context_token = self.context_token

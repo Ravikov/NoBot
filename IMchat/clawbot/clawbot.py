@@ -12,6 +12,8 @@ from IMchat.clawbot.getmsg.waitimer import Waitimer
 from IMchat.clawbot.sendmsg.send import Sender
 from IMchat.clawbot.sendmsg.sendtyping import Typing
 
+from nobot.user.user import usrobj
+
 class WechatClawbot:
 
     def __init__(self):
@@ -38,6 +40,7 @@ class WechatClawbot:
 
             if len(msgobj.msglist) == 1 and msgobj.medialist == []:
                 msgobj.msgtext = msgobj.msglist[0] # 单条文本消息
+                msgobj.media   = []
                 msgobj.msgtype = 1
 
             elif len(msgobj.msglist) == 1 and msgobj.medialist != []:
@@ -47,7 +50,7 @@ class WechatClawbot:
 
             else:
                 msgobj.msgtext = msgobj.msglist
-                msgobj.media = msgobj.medialist
+                msgobj.media   = msgobj.medialist
                 msgobj.msgtype = 9 # 队列消息
 
             log(f'最终消息: {msgobj.msgtext}')

@@ -19,7 +19,7 @@ class TouchLLM:
     """
     # line82-result
 
-    def __init__(self, msg, llm, tpe=1, sysmsg=None, tem=0, search=False):
+    def __init__(self, msg, llm, tpe=1, sysmsg=None, tem=0, search=False, action_dscrb=''):
         # llm: API,secAPI,searchAPI,multimodalAPI
         self.usrmsg  = msg
         self.sysmsg  = sysmsg
@@ -30,6 +30,8 @@ class TouchLLM:
         self.search  = search
         self.tpe     = tpe
         self.config  = load_config()
+
+        self.action_dscrb  = action_dscrb
         
         self.hit_rate = 0
         self.result  = {}
@@ -103,7 +105,8 @@ class TouchLLM:
             except:
                 pass
             
-            if self.config['debug'] and self.llm=='API':
+            # 缓存命中率注入
+            if self.config['debug'] and self.llm=='API' and self.tpe != 101:
                 llm_msg += f"#缓存命中率: {self.hit_rate}"
             self.result = {
                     'msg': llm_msg,
@@ -139,16 +142,49 @@ class TouchLLM:
     # 构建回复postmsg
     def get_postmsg(self):
         history = load_history()
-        return (
-                    [{"role": "system", "content": self.role_prompt}]
-                    + [{"role": "system", "content": '回答长度稍长时必须使用#符号对你的回答进行分段(仅在两段交界处且#后方不要加空格)除非该场景下长文段对话体验更好,段数不限,不允许出现换行,不允许出现动作描述'}]
-                    + history.get('history', [])
-                    + history.get('memory', [])
-                    + [{"role": "system",
-                        "content": "对话格式举例,非用户消息与上下文,仅作回复格式参考: 用户:你好. AI:你好#需要我帮助你做什么呢#我可以满足你的很多请求"}]
-                    + [{"role": "user", "content": self.usrmsg}]
-                    + self.get_time()
-                )
+        debug_log(f"tpe= {self.tpe}")
+
+        if self.tpe == 1:
+            return (
+                        [{"role": "system", "content": self.role_prompt}]
+                        + [{"role": "system", "content": '回答长度稍长时必须使用#符号对你的回答进行分段(仅在两段交界处且#后方不要加空格)除非该场景下长文段对话体验更好,段数不限,不允许出现换行,不允许出现动作描述'}]
+                        + history.get('history', [])
+                        + history.get('memory', [])
+                        + [{"role": "system",
+                            "content": "对话格式举例,非用户消息与上下文,仅作回复格式参考: 用户:你好. AI:你好#需要我帮助你做什么呢#我可以满足你的很多请求"}]
+                        + [{"role": "user", "content": self.usrmsg}]
+                        + self.get_time()
+                    )
+        elif self.tpe == 101:
+            debug_log("使用esp32提示词")
+            self.tem = 0.5
+            return (
+                        [{"role": "system", "content": self.role_prompt}]
+                        + [{"role": "system", "content": """
+你可以控制一块esp32开发板,你的回复格式必须严格遵循如下json格式,且不要以md代码块包裹:
+{
+"msg":这里是你要说的话,字符串,
+"action":这里是你要做的动作,具体可以做哪些动作会在下文提示词告诉你,以动作对应的编号回复,整数,
+"hardware":这里是你的动作要作用的对象,下文提示词也会给出可用的硬件,注意与action相对应,同样回复编号,整数                            
+}
+如果需要执行多个指令,可以将各个字典用#号分开,第二个往后的动作如果不需要msg则可以不包含此项
+msg中的消息可以用#分开,实现分段回复
+对于动作键值对,如果无需实现动作可以留空
+"""}]
+                        + [{"role": "system", "content": f"可用的action及硬件:{self.action_dscrb}"}]
+                        + history.get('history', [])
+                        + history.get('memory', [])
+                        + [{"role": "system",
+                            "content": """对话格式举例,非用户消息与上下文,仅作回复格式参考,具体可用硬件与动作以实际为准.
+用户:点亮红色led.
+AI:{
+"msg":"好的,已点亮",
+"action":0,
+"hardware":0
+}"""}]
+                        + [{"role": "user", "content": self.usrmsg}]
+                        + self.get_time()
+                    )
 
     def touch(self):
         match self.llm:

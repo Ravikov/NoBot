@@ -10,9 +10,11 @@ listfile = pathlib.Path(__file__).parent / 'userlist.json'
 
 class User:
 
-    def __init__(self, name='main', mode='choose'):
-        self.name = name
-        self.mode = mode
+    def __init__(self, name='main', mode='choose', type='chat'):
+        self.name   = name
+        self.mode   = mode
+        self.type   = type
+        self.action = ''
 
 def load_usrjson():
     with open(listfile, 'r', encoding='utf-8') as f:
@@ -51,7 +53,13 @@ def run():
                 "user": [
                     {
                     "name":"main",
-                    "creat_time": time.strftime('%Y-%m-%d %H:%M',time.localtime())
+                    "creat_time": time.strftime('%Y-%m-%d %H:%M',time.localtime()),
+                    "type": "chat"
+                    },
+                    {
+                    "name": "embodiment",
+                    "creat_time": time.strftime('%Y-%m-%d %H:%M',time.localtime()),
+                    "type": "esp32"
                     }
                 ]
             }
@@ -66,14 +74,18 @@ def run():
         for usr in userlist:
             user_namelist.append(usr['name'])
         return user_namelist
-    user_namelist = get_namelist()
 
     def choose():
         global usrobj
         while 1:
             print('当前有如下用户:')
+            user_map = {}
             for usr in userlist:
-                print(f"名称: {usr['name']},创建时间: {usr['creat_time']}")
+                print(f"名称: {usr['name']},创建时间: {usr['creat_time']},类型: {usr['type']}")
+                user_map[usr['name']] = {
+                    'name':usr['name'],
+                    'type':usr['type']
+                    }
                 
             print('请输入启动用户的名称,或输入delete来删除一个用户,输入creat来创建一个用户')
             start_user = input('>>>')
@@ -89,8 +101,8 @@ def run():
                     case _:
                         log('选择有误,请重新选择!')
 
-        log(f"选定用户{start_user}")
-        usrobj = User(name=start_user)
+        log(f"选定用户{start_user},类型{user_map[start_user]['type']}")
+        usrobj = User(name=start_user,type=user_map[start_user]['type'])
         return usrobj
 
     def get_usrconfig(name):

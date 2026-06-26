@@ -1,6 +1,7 @@
-from debug.log import log
+from debug.log import *
 import time
 import traceback
+import queue
 from nobot.src.core.reply.reply import Reply
 
 # 消息类
@@ -34,6 +35,7 @@ class ReplyOut(Message):
         }
 
 
+msg_queue = queue.Queue()
 # 子类 reply函数输入消息 以消息对象构建reply输入字典
 class ReplyIn(Message):
     def __init__(self, msgdict):
@@ -43,9 +45,14 @@ class ReplyIn(Message):
                          media=msgdict['media'])
 
     def get_reply(self):
+        global msg_queue
+        
         try:
             replyer = Reply({'type': self.msgtype, 'msg': self.msgtext, 'media': self.media})
             replyer.reply()
+            if self.msgtype == 105:
+                msg_queue.put(replyer)
+                debug_log(f'from ReplyIn.get_reply: msg_queue.put size:{msg_queue.qsize()}')
             llm_msg = replyer.llm_msg
         except Exception as e:
             log(f'发生错误: {traceback.format_exc()}')

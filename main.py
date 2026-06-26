@@ -88,7 +88,8 @@ def run_bot():
                 2-命令行启动
                 3-微信启动(不可用)
                 4-微信clawbot启动
-                5-Websocket启动
+                5-WebSocket启动
+                6-WebSocket+ClawBot 微信控制esp32
             """)
             print('在下方输入选择编号并回车,程序运行途中,您可以随时按 CTRL+C 退出,包括现在')
             try:
@@ -155,7 +156,6 @@ def run_bot():
 
             case '4':
                 log('Wechat Claw Bot启动...')
-                debug_log('尝试创建 WechatClawbot 对象')
                 wechat_clawbot = WechatClawbot()
                 threading.Thread(target=wechat_clawbot.wechat_claw,daemon=True).start()
 
@@ -163,6 +163,26 @@ def run_bot():
                 log('Websocket————无限可能!')
                 websocketer = Websocket()
                 threading.Thread(target=websocketer.start,daemon=True).start()
+
+            case '6':
+                log("将同时启动微信和Websocket")
+                websocketer = Websocket()
+                ws_th = threading.Thread(target=websocketer.start,daemon=True)
+                ws_th.start()
+                print('等待连接上报action')
+                while 1:
+                    try:
+                        with open(CONFIG_FILE.parent/'actionAndHardware.txt','r') as f:
+                            if f.read():
+                                break
+                            else:
+                                print('.',end='')
+                    except:
+                        pass
+                    time.sleep(2)
+
+                wechat_clawbot = WechatClawbot()
+                threading.Thread(target=wechat_clawbot.wechat_claw,daemon=True).start()
 
             case 'set':
                 threading.Thread(target=set_config,daemon=True).start()
@@ -188,7 +208,8 @@ if __name__ == '__main__':
         while True:
             time.sleep(2)
     except KeyboardInterrupt:
-        log('收到终止指令,退出...')
-        time.sleep(1)
+        if usrobj.type == 'esp32':
+            with open(CONFIG_FILE.parent/'actionAndHardware.txt', 'w', encoding='utf-8') as f:
+                f.write('')
         log("程序优雅退出~")
     log(f'程序结束,结束码: {ender}')
