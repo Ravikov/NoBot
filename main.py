@@ -181,6 +181,7 @@ def run_bot():
                         pass
                     time.sleep(2)
 
+                time.sleep(2)
                 wechat_clawbot = WechatClawbot()
                 threading.Thread(target=wechat_clawbot.wechat_claw,daemon=True).start()
 

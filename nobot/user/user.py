@@ -80,15 +80,23 @@ def run():
         while 1:
             print('当前有如下用户:')
             user_map = {}
+            user_number_map = {}
+            i = 1
             for usr in userlist:
-                print(f"名称: {usr['name']},创建时间: {usr['creat_time']},类型: {usr['type']}")
                 user_map[usr['name']] = {
                     'name':usr['name'],
                     'type':usr['type']
                     }
+                user_number_map[i] = usr['name']
+                i+=1
+            i = 1
+            debug_log(user_number_map)
+            for usr in userlist:
+                print(f"{i})名称: {usr['name']},创建时间: {usr['creat_time']},类型: {usr['type']}")
+                i+=1
                 
-            print('请输入启动用户的名称,或输入delete来删除一个用户,输入creat来创建一个用户')
-            start_user = input('>>>')
+            print('请输入启动用户的编号,或输入delete来删除一个用户,输入creat来创建一个用户')
+            start_user = user_number_map[int(input('>>>'))]
 
             if start_user in get_namelist():
                 break
