@@ -105,7 +105,7 @@ def run():
                     return User(mode='creat')
                 case _:
                     try:
-                        if user_number_map[start_user] in get_namelist():
+                        if user_number_map[int(start_user)] in get_namelist():
                             break
                     except:
                         pass
