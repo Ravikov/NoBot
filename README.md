@@ -1,8 +1,8 @@
 # NoBot
 
-📖 English | [简体中文](./README.zh-CN.md)
+📖 English | [简体中文](./README.zh-CN.md) | [日本語](./README.ja.md)
 
-A lightweight AI-powered WeChat chatbot built on the ClawBot interface.
+An **embodied AI** agent platform that blends LLM conversation with physical hardware control. Supports multi-model orchestration, long-term memory, multi-user isolation, and connects to real-world hardware (ESP32) via WebSocket — extending AI from the screen into the physical world.
 
 > This is my first real project — built while learning Python. If something could be better, please bear with me, and if you have advice, I'd be truly grateful!
 
@@ -66,7 +66,8 @@ Select by number at startup:
 | 2 | CLI | Type questions directly in the terminal |
 | 3 | Personal WeChat | ⏳ Unavailable for now |
 | **4** | **WeChat ClawBot** | ✅ **Recommended** — scan QR code, then auto send & receive |
-| **5** | **WebSocket** | ✅ WebSocket server on `ws://127.0.0.1:7323` — for custom clients |
+| **5** | **WebSocket** | ✅ WebSocket server on `ws://127.0.0.1:7323` — for custom clients (including ESP32) |
+| **6** | **WebSocket + ClawBot** | ✅ **ESP32 control from WeChat** — combine ClawBot + WebSocket |
 | `set` | Config Wizard | Re-run the configuration guide |
 | `save` / `load` | Backup / Restore | Dump or restore the current user's config |
 | `del` | Clean logs | Delete `debug/bot.log` |
@@ -80,6 +81,54 @@ Select by number at startup:
 **WeChat ClawBot (4)** — Scans a QR code to log into WeChat via the iLink protocol, then automatically receives and replies to messages. Supports text, images, and videos.
 
 **WebSocket (5)** — Starts a WebSocket server on `ws://127.0.0.1:7323`. Sends received messages to the LLM and returns the reply. If port 7323 is occupied, it auto-increments until a free port is found.
+
+**WebSocket + ClawBot (6)** — Starts both WebSocket server and WeChat ClawBot. NoBot waits for the ESP32 to connect and report its capabilities first, then boots the WeChat listener. Use WeChat to control physical hardware through the LLM.
+
+---
+
+## ESP32 / Hardware Integration (NoBot-esp32)
+
+NoBot can control physical hardware — LEDs, buzzers, motors — via an ESP32-S3 running [NoBot-esp32](https://github.com/Ravikov/NoBot-esp32-demo) firmware over WebSocket.
+
+### Architecture
+
+```
+┌──────────────────── NoBot ────────────────────┐
+│  WeChat / CLI  ──►  LLM Core  ──►  Reply      │
+│                               │    Engine      │
+│                        WebSocket Server :7323  │
+└───────────────────────┬───────────────────────┘
+                        │  JSON commands
+┌───────────────── ESP32-S3 (NoBot-esp32) ───────┐
+│  WiFi ──► Command Handler ──► GPIO (LED/Motor) │
+└───────────────────────────────────────────────┘
+```
+
+### How It Works
+
+1. **Start NoBot** in mode **5** (WebSocket only) or **6** (WeChat + ESP32)
+2. **ESP32 connects** to the WebSocket server; reports available actions & hardware
+3. **User sends a command** — through WeChat, CLI, or directly via WebSocket
+4. **LLM decides** which action to perform and on which hardware
+5. **JSON command** is sent back to ESP32: `{"action":0, "hardware":0}`
+6. **ESP32 executes** — GPIO toggles, LED blinks, etc.
+
+### Configuration: `embodiment` User
+
+An **embodiment** user (`type: esp32`) is auto-created on first launch.
+
+Each embodiment user has its own:
+- **`nobot/config/embodiment/config.json`** — API settings
+- **`nobot/config/embodiment/soul.md`** — System prompt for hardware control
+- **`nobot/config/embodiment/actionAndHardware.txt`** — Capability table reported by ESP32 (auto-generated)
+
+The LLM is prompted to reply with strict JSON when controlling hardware:
+
+```json
+{"msg":"Done!","action":0,"hardware":0}
+```
+
+For the ESP32 firmware setup, see [NoBot-Body](https://github.com/Ravikov/NoBot-Body).
 
 ---
 
