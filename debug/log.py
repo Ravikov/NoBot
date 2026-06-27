@@ -45,7 +45,8 @@ def log(msg, level="INFO", logfile=None):
 
 def debug_log(msg):
     try:
-        with open(pathlib.Path(__file__).parent.parent /'nobot'/'config'/'main'/'config.json', "r", encoding="utf-8") as f:
+        from nobot.src.common import CONFIG_FILE
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
             config = json.load(f)
     except:
         config = {}

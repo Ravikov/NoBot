@@ -191,10 +191,9 @@ class Reply:
                 msg_list = data
                 msg = msg_list[0]['msg']
                 debug_log(f"将向用户发送的消息: {msg}")
-                msg_forUsr_list = msg.split('#')
+                msg_forUsr_list = msg.split('$')
             else:
                 msg_forUsr_list = msg_list
-            debug_log(msg_list)
 
             if self.msgdict['type'] in [100,101,105]:
                 self.esp_result = {  
