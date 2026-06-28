@@ -77,7 +77,6 @@ class WechatClawbot:
                 msgobj.msgtime = time.time()
 
                 if handler.process_now:
-                    log('命令类消息,立即处理...')
                     process_now = True
                 else:
                     waitimer = Waitimer(msgobj)

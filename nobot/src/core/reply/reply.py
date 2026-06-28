@@ -96,18 +96,21 @@ class Reply:
             case _:
                 if self.msgdict['type'] == 9:
                     self.msgdict['msg'] = '#'.join(self.msgdict['msg'])
-                log(f'调用辅助模型判断联网...')
-                toucher = TouchLLM(
-                    msg=None,
-                    llm='secAPI',
-                    sysmsg=(
-                        self.config['or_search_prompt']
-                        + [{'role':'user','content':f"判断本消息:{self.msgdict['msg']}"}]
+                if self.config['or_search']:
+                    log(f'调用辅助模型判断联网...')
+                    toucher = TouchLLM(
+                        msg=None,
+                        llm='secAPI',
+                        sysmsg=(
+                            self.config['or_search_prompt']
+                            + [{'role':'user','content':f"判断本消息:{self.msgdict['msg']}"}]
+                            )
                         )
-                    )
-                toucher.touch()
-                log(f'判断完毕:{toucher.result["msg"]}')
-                if toucher.result['delay'] != -1 and toucher.result['msg'] == '1':
+                    toucher.touch()
+                    log(f'判断完毕:{toucher.result["msg"]}')
+                else:
+                    non_search = True
+                if toucher.result['delay'] != -1 and toucher.result['msg'] == '1' or non_search:
                     toucher.search = True
                     toucher.llm = 'searchAPI'
                     toucher.usrmsg = self.msgdict['msg']
@@ -163,9 +166,12 @@ class Reply:
                     return
             case 105:
                 log('收到来自IM的esp32控制消息')
-                self.media()
-                self.text()
-                self.esp32()
+                if self.msgdict['msg'][0] != '/':
+                    self.media()
+                    self.esp32()
+                else:
+                    log('指令消息')
+                    self.text()
             case _:
                 log('消息类型未匹配!')
                 self.llm_msg = {

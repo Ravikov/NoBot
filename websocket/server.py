@@ -59,7 +59,7 @@ class Websocket:
                 await self.get_and_send(replyer)
                 
         except websockets.exceptions.ConnectionClosedError as e:
-            log(f'客户端{websocket.remote_address}连接断开:')
+            log(f'客户端{websocket.remote_address}连接断开(请以客户端状态为准):{e}')
 
     # 获取reply的消息并发送
     async def get_and_send(self, replyer):
